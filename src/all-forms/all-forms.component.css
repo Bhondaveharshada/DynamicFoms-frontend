@@ -1,0 +1,220 @@
+form {
+    margin: 0 auto;
+  }
+  
+  h1, h2, h3, label {
+    font-weight: bold;
+  }
+  
+  /* Input Styles */
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease-in-out;
+  }
+  
+  input[type="text"]:focus,
+  select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+  }
+  
+  /* Labels and Buttons */
+  .form-label {
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  
+  /* Error Messages */
+  .text-danger {
+    font-size: 0.875rem;
+    color: #dc3545;
+  }
+  
+  /* Dynamic Row Styles */
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  
+  .col-md-6 {
+    flex: 0 0 48%;
+    max-width: 48%;
+    margin: 0 1%;
+  }
+  
+  /* Add Field Button Styles */
+  .text-center {
+    text-align: center;
+  }
+  
+  /* Form Link Section */
+  a {
+    color: #007bff;
+    text-decoration: none;
+   
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .col-md-6 {
+      flex: 0 0 100%;
+      max-width: 100%;
+      margin: 0;
+    }
+  
+    .row {
+      margin-bottom: 0;
+    }
+  }
+  
+  
+  .d-flex {
+      display: flex;
+      justify-content: center;
+      gap: 1rem; /* Adds space between buttons */
+    }
+    
+   
+  
+    /* General Body Styling */
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 20px;
+}
+
+/* Container Styling */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Card Styling */
+.card {
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: #ffffff;
+}
+
+.card:hover {
+ 
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Header */
+.card-header {
+  padding: 15px;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h5 {
+  margin: 0;
+  color:black;
+}
+
+.card-header small {
+  color: black;
+}
+
+/* Card Body */
+.card-body {
+  padding: 15px;
+  color: #333333;
+}
+.card-static {
+  width: 300px; /* Fixed width */
+  height: 400px; /* Fixed height */
+  overflow: hidden; /* Hide overflowing content */
+ 
+  transition: all 0.3s ease; /* Smooth transition for expand */
+}
+
+.card-static:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle hover effect */
+}
+
+.card-static.expanded {
+  height: auto; /* Expand height when selected */
+  overflow: visible; /* Show content when expanded */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* More shadow on expansion */
+}
+
+.card-body ul {
+  list-style: none; /* Remove bullet points */
+  padding: 0;
+}
+
+.card-body ul li {
+  margin-bottom: 5px;
+}
+
+.card-body a {
+  word-wrap: break-word; /* Ensure long URLs break into the next line */
+  color: #007bff;
+}
+
+.card-body a:hover {
+  text-decoration: underline; /* Add underline on hover */
+}
+
+
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .card {
+    margin-bottom: 15px;
+  }
+
+  .card-header h5 {
+    font-size: 16px;
+  }
+  .card a{
+    margin: 1rem;
+    padding: 2rem;
+  }
+
+  .card-body ul li {
+    font-size: 12px;
+  }
+
+  .btn {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+}
+
+.link-style {
+  display: block;
+  margin: 10px;
+  padding: 10px;
+ font-size: small;
+  border-radius: 5px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+
+
+
+   
+    
+    
