@@ -7,13 +7,13 @@ import Swal from 'sweetalert2';
 
 
 interface Field {
-  checkboxOptions?: string[]; // Optional property
-  radioButtonOptions?:string[];
+  options?: string[]; // Unified for both checkboxes and radio buttons
   inputType: string;
   isrequired: string;
   value: string;
   _id: string;
 }
+
 
 @Component({
   selector: 'app-formgenerate',
@@ -60,54 +60,32 @@ export class FormgenerateComponent {
   
   }
 
-  fetchFormFields(id:any): void {
+  fetchFormFields(id: any): void {
     this.formService.getFormFields(id).subscribe({
-      next:(response:any)=>{
-        this.formData=response.result
-        this.fields=response.result.additionalFields.map((field: any) => field);
-        const checkboxField = this.fields.find(
-          (field: any) => field.inputType === "checkbox"
-        );
-        if (checkboxField) {
-          this.checkboxoptions = checkboxField.checkboxOptions || [];
-        }
-
-        const radiobuttonField= this.fields.find(
-        (field:any)=>field.inputType === "radio"
-        );
-
-
-        if (radiobuttonField){
-          this.radioButtonOptions= radiobuttonField.radioButtonOptions || [];
-        }
-        console.log("Fields from backend:", this.fields);
-        console.log("Checkbox options:", this.checkboxoptions);
-        console.log("radio buttons ", this.radioButtonOptions);
-        
+      next: (response: any) => {
+        this.formData = response.result;
   
-       
-        
-        
-       /*  console.log("formfields",this.formData); */
+        // Use the unified 'options' field for both checkbox and radio inputs
+        this.fields = response.result.additionalFields.map((field: any) => field);
+  
+        console.log("Fields from backend:", this.fields);
         this.previewForm = this.fb.group({
           title: [this.formData.title, Validators.required],
           additionalFields: this.fb.array(
             this.formData.additionalFields.map((field: any) =>
               this.fb.group({
-                value:field.inputType === 'checkbox' ? [[]] : ['', this.getDynamicValidators(field)], // Pre-fill values
-                inputType: [field.inputType, Validators.required], 
+                value: field.inputType === 'checkbox' ? [[]] : ['', this.getDynamicValidators(field)],
+                inputType: [field.inputType, Validators.required],
                 isrequired: [field.isrequired],
-                checkboxOptions: [Array.isArray(field.checkboxOptions) ? field.checkboxOptions : []],
-                radioButtonOptions:[Array.isArray(field.radioButtonOptions) ? field.radioButtonOptions : []]
-              }) 
+                options: [Array.isArray(field.options) ? field.options : []],
+              })
             )
           ),
         });
-       /*  console.log("preiview from",this.previewForm); */
-        
-      },error: (err:any)=>{
-        console.error("error fetching fields",err);  
-      }
+      },
+      error: (err: any) => {
+        console.error("Error fetching fields", err);
+      },
     });
   }
 

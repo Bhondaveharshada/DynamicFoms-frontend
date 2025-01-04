@@ -1,0 +1,118 @@
+<div class="example-container">
+    <h2>Available fields</h2>
+    
+    <div
+      id="all"
+      cdkDropList
+      [cdkDropListData]="all"
+      cdkDropListConnectedTo="even"
+      class="example-list"
+      (cdkDropListDropped)="drop($event)"
+      [cdkDropListEnterPredicate]="noReturnPredicate">
+      <div
+        class="example-box"
+        *ngFor="let field of all"
+        [cdkDragData]="field"
+        cdkDrag>{{field}}</div>
+    </div>
+    </div>
+    
+    <div class="container example-container">
+    <h2>Form</h2>
+    <div class="mb-3">
+        <label for="title" class="form-label fw-bold">Form Title</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="form-control"
+          [(ngModel)]="title"
+          required
+          placeholder="Enter form title"
+        />
+      </div>
+    
+    <div
+      id="even"
+      cdkDropList
+      [cdkDropListData]="additionalFields"
+      cdkDropListConnectedTo="all"
+      class="example-list"
+      (cdkDropListDropped)="drop($event)">
+      
+      <!-- Loop through the forms array and display fields based on their inputType -->
+      <div
+        *ngFor="let field of additionalFields; let i = index"
+        class="form-field">
+        
+        <!-- Dropdown to select the field inputType -->
+        <select [(ngModel)]="field.inputType" (change)="onFieldTypeChange(i, field.inputType)">
+          <option *ngFor="let inputType of all" [value]="inputType">{{inputType}}</option>
+        </select>
+    
+        <!-- Label input (user defined for any type) -->
+        <label for="label-{{i}}">Label:</label>
+        <input
+          id="label-{{i}}"
+          [(ngModel)]="field.label"
+          type="text"
+          placeholder="Enter label text"
+        />
+    
+        <!-- Field types handling -->
+        <div *ngIf="field.inputType === 'label'">
+          <span>{{field.label}}</span>
+        </div>
+        
+        <div *ngIf="field.inputType === 'checkbox' || field.inputType === 'radio'">
+          <!-- Options for checkbox/radio -->
+          <label>Add options:</label>
+          <div *ngFor="let option of field.options; let j = index trackBy: trackByIndex">
+            <input [(ngModel)]="field.options[j]" placeholder="Option {{j + 1}}">
+            <button (click)="removeOption(i, j)">Remove</button>
+          </div>
+          <button (click)="addOption(i)">Add Option</button>
+        </div>
+    
+        <div *ngIf="field.inputType !== 'checkbox' && field.inputType !== 'radio' && field.inputType !== 'label'">
+          <!-- Input fields for text, number, email, password, and date -->
+<!--           <input
+            [type]="field.type"
+            placeholder="Enter {{field.type}}"
+          /> -->
+        </div>
+    
+        <!-- Checkbox for required field -->
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="field.required"
+              (change)="onRequiredChange(i, field.required)" />
+            Required
+          </label>
+        </div>
+    
+        <!-- Remove button to delete the field -->
+        <button (click)="removeField(i)">Remove</button>
+        
+      </div>
+      <button
+                type="button"
+                class="btn ms-3"
+               
+                [disabled]="!title"
+                (click)="onSave($event)"
+              >
+              save Form
+              </button>
+     <div *ngIf="formLink" class="mt-3">
+                <p>Generated Link:</p>
+                <a [href]="formLink" target="_blank">{{ formLink }}</a>
+                <div class="mt-2">
+                  <span *ngIf="isLinkSaved" class="text-success ms-2">Form saved successfully!</span>
+                </div>
+    </div>
+    </div>
+    </div>
+    

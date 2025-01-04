@@ -54,9 +54,9 @@
             />
   
             <!-- Checkbox -->
-          <div *ngSwitchCase="'checkbox'">
+    <div *ngSwitchCase="'checkbox'">
     <div
-      *ngFor="let option of fields[fieldIndex].checkboxOptions; let i = index"
+      *ngFor="let option of fields[fieldIndex].options; let i = index"
       class="form-check"
     >
       <input
@@ -76,28 +76,27 @@
     </div>
   </div>
   
-  
-            <!-- Radio -->
-            <div *ngSwitchCase="'radio'">
-              <div
-                *ngFor="let option of fields[fieldIndex].radioButtonOptions; let i = index"
-                class="form-check"
-              >
-                <input
-                  class="form-check-input"
-                  type="radio"
-                  id="radio{{ fieldIndex }}-{{ i }}"
-                  [value]="option"
-                  [formControlName]="'value'"
-                />
-                <label
-                  class="form-check-label"
-                  [for]="'radio' + fieldIndex + '-' + i"
-                >
-                  {{ option }}
-                </label>
-              </div>
-            </div>
+
+
+<!-- Radio -->
+<div *ngSwitchCase="'radio'">
+  <div
+    *ngFor="let option of fields[fieldIndex]?.options; let i = index"
+    class="form-check"
+  >
+    <input
+      class="form-check-input"
+      type="radio"
+      id="radio{{ fieldIndex }}-{{ i }}"
+      [value]="option"
+      formControlName="value"
+    />
+    <label class="form-check-label" [for]="'radio' + fieldIndex + '-' + i">
+      {{ option }}
+    </label>
+  </div>
+</div>
+
           </ng-container>
   
           <!-- Error Messages -->
