@@ -1,6 +1,7 @@
-<div class="example-container">
-    <h2>Available fields</h2>
-    
+<div class="example-container d-flex">
+  <!-- Sidebar for draggable fields -->
+  <div class="sidebar">
+    <h2>Available Fields</h2>
     <div
       id="all"
       cdkDropList
@@ -13,25 +14,26 @@
         class="example-box"
         *ngFor="let field of all"
         [cdkDragData]="field"
-        cdkDrag>{{field}}</div>
+        cdkDrag>{{ field }}</div>
     </div>
-    </div>
-    
-    <div class="container example-container">
+  </div>
+
+  <!-- Form builder area -->
+  <div class="form-builder">
     <h2>Form</h2>
     <div class="mb-3">
-        <label for="title" class="form-label fw-bold">Form Title</label>
-        <input
-          type="text"
-          id="title"
-          name="title"
-          class="form-control"
-          [(ngModel)]="title"
-          required
-          placeholder="Enter form title"
-        />
-      </div>
-    
+      <label for="title" class="form-label fw-bold">Form Title</label>
+      <input
+        type="text"
+        id="title"
+        name="title"
+        class="form-control"
+        [(ngModel)]="title"
+        required
+        placeholder="Enter form title"
+      />
+    </div>
+
     <div
       id="even"
       cdkDropList
@@ -40,50 +42,47 @@
       class="example-list"
       (cdkDropListDropped)="drop($event)">
       
-      <!-- Loop through the forms array and display fields based on their inputType -->
       <div
+      
         *ngFor="let field of additionalFields; let i = index"
-        class="form-field">
+        class="form-field" cdkDrag>
         
-        <!-- Dropdown to select the field inputType -->
         <select [(ngModel)]="field.inputType" (change)="onFieldTypeChange(i, field.inputType)">
-          <option *ngFor="let inputType of all" [value]="inputType">{{inputType}}</option>
+          <option *ngFor="let inputType of all" [value]="inputType">{{ inputType }}</option>
         </select>
-    
-        <!-- Label input (user defined for any type) -->
-        <label for="label-{{i}}">Label:</label>
+
+        <label for="label-{{ i }}">Label:</label>
         <input
-          id="label-{{i}}"
+          id="label-{{ i }}"
           [(ngModel)]="field.label"
           type="text"
           placeholder="Enter label text"
+          required
+          #labelInput="ngModel"
         />
-    
-        <!-- Field types handling -->
+
+        <div *ngIf="labelInput.invalid && labelInput.touched" class="error-message">
+          Label is required.
+        </div>
+
         <div *ngIf="field.inputType === 'label'">
-          <span>{{field.label}}</span>
+          <span>{{ field.label }}</span>
         </div>
         
         <div *ngIf="field.inputType === 'checkbox' || field.inputType === 'radio'">
-          <!-- Options for checkbox/radio -->
-          <label>Add options:</label>
-          <div *ngFor="let option of field.options; let j = index trackBy: trackByIndex">
-            <input [(ngModel)]="field.options[j]" placeholder="Option {{j + 1}}">
-            <button (click)="removeOption(i, j)">Remove</button>
+        
+          <div class="d-flex" *ngFor="let option of field.options; let j = index; trackBy: trackByIndex" cdkDrag>
+            <input [(ngModel)]="field.options[j]" placeholder="Option {{ j + 1 }}">
+            <button class="btn btn-outline-danger" (click)="removeOption(i, j)"><i class="bi bi-trash"></i></button>
           </div>
-          <button (click)="addOption(i)">Add Option</button>
+          <button (click)="addOption(i)" class="btn btn-outline-info">Add Option</button>
         </div>
-    
+
         <div *ngIf="field.inputType !== 'checkbox' && field.inputType !== 'radio' && field.inputType !== 'label'">
-          <!-- Input fields for text, number, email, password, and date -->
-<!--           <input
-            [type]="field.type"
-            placeholder="Enter {{field.type}}"
-          /> -->
+       
         </div>
-    
-        <!-- Checkbox for required field -->
-        <div>
+
+        <div class="d-flex">
           <label>
             <input
               type="checkbox"
@@ -92,27 +91,32 @@
             Required
           </label>
         </div>
-    
-        <!-- Remove button to delete the field -->
-        <button (click)="removeField(i)">Remove</button>
-        
+
+        <button class="btn btn-outline-danger" (click)="removeField(i)">Remove</button>
       </div>
-      <button
-                type="button"
-                class="btn ms-3"
-               
-                [disabled]="!title"
-                (click)="onSave($event)"
-              >
-              save Form
-              </button>
-     <div *ngIf="formLink" class="mt-3">
-                <p>Generated Link:</p>
-                <a [href]="formLink" target="_blank">{{ formLink }}</a>
-                <div class="mt-2">
-                  <span *ngIf="isLinkSaved" class="text-success ms-2">Form saved successfully!</span>
-                </div>
+
+      <div class="d-flex justify-content-center my-3">
+        <button type="button" class="btn btn-outline-primary" (click)="addField()">
+          Add Field
+        </button>
+        <button
+          type="button"
+          class="btn ms-3"
+          [ngClass]="'btn-outline-success'"
+          [disabled]="!title || !additionalFields"
+          (click)="onSave($event)"
+        >
+          Save Form
+        </button>
+      </div>
+
+      <div *ngIf="formLink" class="mt-3">
+        <p>Generated Link:</p>
+        <a [href]="formLink" target="_blank">{{ formLink }}</a>
+        <div class="mt-2">
+          <span *ngIf="isLinkSaved" class="text-success ms-2">Form saved successfully!</span>
+        </div>
+      </div>
     </div>
-    </div>
-    </div>
-    
+  </div>
+</div>

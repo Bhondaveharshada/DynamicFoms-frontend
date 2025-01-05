@@ -41,6 +41,18 @@ export class DragdropComponent {
       this.additionalFields.push({ inputType: event.item.data, label: '', required: false, options: [] });
     }
   }
+ 
+  
+  addField(): void {
+    this.additionalFields.push({
+      label: '',
+      inputType: 'text',
+      required: false,
+      options: [],
+  
+    });
+  }
+   
 
   trackByIndex(index: number, item: any): number {
     return index;

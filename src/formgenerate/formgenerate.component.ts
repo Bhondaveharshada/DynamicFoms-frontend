@@ -47,7 +47,7 @@ export class FormgenerateComponent {
       fields.forEach((field, index) => {
         const fieldControl = (this.previewForm?.get('additionalFields') as FormArray).at(index) as FormGroup;
   
-        if (field.isrequired === 'required') {
+        if (field.isrequired===true) {
           fieldControl.get('value')?.setValidators(this.getValidators(field.inputType));
         } else {
           fieldControl.get('value')?.clearValidators();
@@ -121,12 +121,16 @@ export class FormgenerateComponent {
         return [Validators.required, Validators.minLength(3)];
       case 'password':
         return [Validators.required, Validators.minLength(6)];
+      case 'checkbox':
+        return [Validators.requiredTrue]; // Ensures checkbox is checked
+      case 'radio':
+        return [Validators.required];
       default:
         return [Validators.required]; // Default validator
     }
   }
   getDynamicValidators(field: any) {
-    if (field.isrequired === 'required') {
+    if (field.isrequired) {
       return this.getValidators(field.inputType); // Apply validators if 'required'
     }
     return []; // No validators if 'optional'
