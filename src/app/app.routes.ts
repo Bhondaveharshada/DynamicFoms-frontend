@@ -4,6 +4,7 @@ import { FormgenerateComponent } from '../formgenerate/formgenerate.component';
 import { AllFormsComponent } from '../all-forms/all-forms.component';
 import { UserformsComponent } from '../userforms/userforms.component';
 import { DragdropComponent } from '../dragdrop/dragdrop.component';
+import { UpdateformComponent } from '../updateform/updateform.component';
 
 export const routes: Routes = [{
     path:"register", component:FormComponent
@@ -23,6 +24,9 @@ export const routes: Routes = [{
 },
 {
     path:"dragdrop", component:DragdropComponent
-
+},
+{
+    path:'updateform/:id',component:UpdateformComponent
 }
+
 ];

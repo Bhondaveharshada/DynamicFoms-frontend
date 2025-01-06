@@ -1,7 +1,7 @@
 <div class="container-fluid mt-5">
     <h2>Forms</h2>
     <div class="d-flex justify-content-end align-items-center mb-4 ms-5">
-      <button routerLink="/register" class="btn btn-outline-primary">
+      <button routerLink="/dragdrop" class="btn btn-outline-primary">
        Create New Form
       </button>
      
@@ -9,12 +9,12 @@
   
   
     <!-- Form Modal -->
-    <div [class.modal-active]="showForm">
+<!--     <div [class.modal-active]="showForm">
       <div *ngIf="showForm" class="container card mb-4 shadow">
         <div class="card-body">
           <h3>{{ isEditing ? 'Edit Form' : 'Create New Form' }}</h3>
           <form (ngSubmit)="onSave($event)" #userForm="ngForm">
-            <!-- Form Title -->
+            <!-- Form Title 
             <div class="mb-3">
               <label for="title" class="form-label fw-bold">Form Title</label>
               <input
@@ -28,7 +28,6 @@
               />
             </div>
   
-            <!-- Dynamic Additional Fields -->
             <div class="mb-3" *ngFor="let field of additionalFields; let i = index">
               <div class="row g-2">
                 <div class="col-md-3">
@@ -79,9 +78,9 @@
                 </div>
               </div>
             
-             <!-- checkboxes and radio  -->
+            
              <div *ngIf="field.inputType === 'checkbox'">
-              <!-- Display checkbox options with remove button -->
+            
               <div 
                 *ngFor="let option of field.checkboxOptions; let j = index; trackBy: trackByIndex" 
                 class="row mb-2"
@@ -106,7 +105,6 @@
                 </div>
               </div>
             
-              <!-- Add new checkbox option -->
               <button 
                 type="button" 
                 class="btn btn-outline-primary btn-sm mt-2" 
@@ -117,9 +115,8 @@
             </div>
             
           
-          <!-- additional section for radio button options  -->
+         
           <div *ngIf="field.inputType === 'radio'">
-            <!-- Display radio button options with remove button -->
             <div 
               *ngFor="let option of field.radioButtonOptions; let j = index; trackBy: trackByIndex" 
               class="row mb-2"
@@ -144,8 +141,7 @@
               </div>
             </div>
           
-            <!-- Add new radio button option -->
-            <button 
+                       <button 
               type="button" 
               class="btn btn-outline-primary btn-sm mt-2" 
               (click)="addRadioOption(field)"
@@ -158,7 +154,7 @@
 
 </div>
               
-            <!-- Add Field & Save Buttons -->
+          
             <div class="d-flex justify-content-center my-3">
               <button
                 type="button"
@@ -190,7 +186,7 @@
           </form>
         </div>
       </div>
-    </div>
+    </div> -->
   
          
         
@@ -264,8 +260,8 @@
               <ul>
                 <li *ngFor="let field of selectedForm?.additionalFields">
                   {{ field.value }} 
-                  <strong *ngIf="field.isrequired === 'required'">*</strong>
-                  ({{ field.inputType }}), options({{field.checkboxOptions}} {{field.radioButtonOptions}})
+                  <strong *ngIf="field.isrequired">*</strong>
+                  ({{ field.inputType }}), options({{field.options}})
                 </li>
               </ul>
             </div>
@@ -281,7 +277,7 @@
               </button>
               <button
                 class="btn btn-outline-warning btn-sm"
-                (click)="editForm(selectedForm)"
+                (click)="editForm(selectedForm?._id)"
                 data-bs-dismiss="modal"
                 
               >

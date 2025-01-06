@@ -130,17 +130,17 @@ generateRadioButtonOptions(field: any): void {
 }
 
 // Populate form data for editing
-editForm(form: any): void {
-  
+editForm(id:any): void {
+  this.router.navigate([`/updateform/${id}`])
   this.showForm = true; // Show the form section
   this.isEditing = true; // Set to edit mode
-  this.formIdToEdit = form._id; // Store the form ID being edited
+  //this.formIdToEdit = form._id; // Store the form ID being edited
 
   console.log(this.formIdToEdit);
   
 
   // Populate the form fields
-  this.title = form.title;
+ /*  this.title = form.title;
   this.additionalFields = form.additionalFields.map((field: any) => ({
     value: field.value,
     inputType: field.inputType,
@@ -149,12 +149,12 @@ editForm(form: any): void {
     numberOfCheckboxes: field.numberOfCheckboxes, 
     radioButtonOptions:field.radioButtonOptions, 
     numberOfRadioButtons: field.numberOfRadioButtons, 
-  }));
+  })); */
 
 }
 
 // Save or Update form data
-onSave(event: Event): void {
+/* onSave(event: Event): void {
   event.preventDefault(); // Prevent the default form submission behavior
 
   const formId = new Date().getTime();
@@ -228,7 +228,7 @@ addRadioOption(field: any): void {
   }
   field.radioButtonOptions.push(''); 
 }
-
+ */
 
 trackByIndex(index: number): number {
   return index; // Use the index as the unique identifier

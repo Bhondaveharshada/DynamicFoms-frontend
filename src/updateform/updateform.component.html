@@ -1,0 +1,133 @@
+<div class="example-container d-flex">
+    <!-- Sidebar for draggable fields -->
+    <div class="sidebar">
+      <h2>Available Fields</h2>
+      <div
+        id="all"
+        cdkDropList
+        [cdkDropListData]="all"
+        cdkDropListConnectedTo="even"
+        class="example-list"
+        (cdkDropListDropped)="drop($event)"
+        [cdkDropListEnterPredicate]="noReturnPredicate"
+      >
+        <div
+          class="example-box"
+          *ngFor="let field of all"
+          [cdkDragData]="field"
+          cdkDrag
+        >
+          {{ field }}
+        </div>
+      </div>
+    </div>
+  
+    <!-- Form builder area -->
+    <div class="form-builder">
+      <h2>Edit Form</h2>
+      <div class="mb-3">
+        <label for="title" class="form-label fw-bold">Form Title</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="form-control"
+          [(ngModel)]="title"
+          required
+          placeholder="Enter form title"
+        />
+      </div>
+  
+      <div
+        id="even"
+        cdkDropList
+        [cdkDropListData]="additionalFields"
+        cdkDropListConnectedTo="all"
+        class="example-list"
+        (cdkDropListDropped)="drop($event)"
+      >
+        <div
+          *ngFor="let field of additionalFields; let i = index"
+          class="form-field"
+          cdkDrag
+        >
+          <!-- Field Type Selection -->
+          <select [(ngModel)]="field.inputType" (change)="onFieldTypeChange(i, field.inputType)">
+            <option *ngFor="let inputType of all" [value]="inputType">{{ inputType }}</option>
+          </select>
+  
+          <!-- Label Input -->
+          <label for="label-{{ i }}">Label:</label>
+          <input
+            id="label-{{ i }}"
+            [(ngModel)]="field.label"
+            type="text"
+            placeholder="Enter label text"
+            required
+            #labelInput="ngModel"
+          />
+  
+          <div *ngIf="labelInput.invalid && labelInput.touched" class="error-message">
+            Label is required.
+          </div>
+  
+          <!-- Checkbox and Radio Options -->
+          <div *ngIf="field.inputType === 'checkbox' || field.inputType === 'radio'">
+            <div
+              class="d-flex justify-content-start align-items-center"
+              *ngFor="let option of field.options; let j = index; trackBy: trackByIndex"
+              cdkDrag
+            >
+            <input [(ngModel)]="field.options[j]" placeholder="Option {{ j + 1 }}" style="width: 500px; padding: 5px; font-size: 16px;" />
+
+              <button class="btn btn-outline-danger" (click)="removeOption(i, j)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            <button (click)="addOption(i)" class="btn btn-outline-info ">Add Option</button>
+          </div>
+  
+          <!-- Non-option fields (e.g., text, number) -->
+          <div *ngIf="field.inputType !== 'checkbox' && field.inputType !== 'radio' && field.inputType !== 'label'"></div>
+  
+          <!-- Required Checkbox -->
+          <div class="d-flex">
+            <label>
+              <input
+                type="checkbox"
+                [(ngModel)]="field.required"
+                (change)="onRequiredChange(i, field.required)"
+              />
+              Required
+            </label>
+          </div>
+  
+          <!-- Remove Field Button -->
+          <button class="btn btn-outline-danger" (click)="removeField(i)">Remove</button>
+        </div>
+  
+        <!-- Add Field & Update Buttons -->
+        <div class="d-flex justify-content-center my-3">
+          <button type="button" class="btn btn-outline-primary" (click)="addField()">
+            Add Field
+          </button>
+          <button
+            type="button"
+            class="btn ms-3"
+            [ngClass]="'btn-outline-success'"
+            [disabled]="!title || !additionalFields"
+            (click)="onUpdate($event)"
+          >
+            Update Form
+          </button>
+        </div>
+      
+         
+<div *ngIf="formUpdated" class="mt-2">
+    <span class="text-success ms-2">Form updated successfully!</span>
+  </div>
+       
+      </div>
+    </div>
+  </div>
+  
