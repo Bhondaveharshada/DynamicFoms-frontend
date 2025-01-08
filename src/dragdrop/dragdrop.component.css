@@ -143,12 +143,6 @@ button.btn-outline-success {
   background-color: transparent;
 }
 
-button.btn-outline-secondary {
-  border: 1px solid #6f8574;
-  width: 4rem;
-  font-size:medium;
-}
-
 button.btn-outline-success:hover {
   background-color: #28a745;
   color: #fff;
