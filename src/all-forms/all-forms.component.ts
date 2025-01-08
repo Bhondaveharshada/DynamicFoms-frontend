@@ -48,7 +48,7 @@ export class AllFormsComponent implements OnInit {
     this.formService.getAllFormFields().subscribe({
       next: (res: any) => {
         console.log('All form fields:', res);
-        this.formFields = res.result; // Assuming result contains the array
+        this.formFields = res.result.reverse();// Assuming result contains the array
       },
       error: (err: any) => {
         console.error('Error in fetching form fields', err);
