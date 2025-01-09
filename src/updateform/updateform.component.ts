@@ -21,7 +21,6 @@ export class UpdateformComponent implements OnInit {
   all = [
     'text',
     'number',
-    'label',
     'email',
     'password',
     'date',

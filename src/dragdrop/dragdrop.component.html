@@ -78,7 +78,7 @@
             <input [(ngModel)]="field.options[j]" placeholder="Option {{ j + 1 }}">
             <button class="btn btn-outline-danger" (click)="removeOption(i, j)"><i class="bi bi-trash"></i></button>
           </div>
-          <button (click)="addOption(i)" class="btn btn-outline-info">Add Option</button>
+          <button (click)="addOption(i)" class="btn btn-outline-info btn-sm">Add Option</button>
         </div>
 
         <div *ngIf="field.inputType !== 'checkbox' && field.inputType !== 'radio' && field.inputType !== 'label'">

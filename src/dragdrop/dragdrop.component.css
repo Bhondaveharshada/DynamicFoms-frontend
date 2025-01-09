@@ -79,10 +79,18 @@
 .form-field {
   padding: 15px;
   margin-bottom: 20px;
-  border: 1px solid #ddd;
   border-radius: 6px;
-  background-color: #f8f9fa;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background-color: #e8f0fe; /* Same light blue background as example-box */
+  color: #1d3557; /* Dark text color for contrast */
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Same subtle shadow */
+  cursor: grab;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.form-field:hover {
+  background-color: #d1e7ff; /* Slightly darker blue on hover */
+ /*  color: #1f59e1; Same color transition as example-box */
 }
 
 /* Inputs and selects inside form fields */
@@ -123,6 +131,9 @@ button.btn-outline-primary:hover {
 button.btn-outline-danger {
   border: 1px solid #dc3545;
   color: #dc3545;
+  width: 5rem;;
+  padding: 5px 8px; /* Reduce padding */
+  font-size: 0.9rem; /* Decrease font size */
   background-color: transparent;
 }
 
@@ -133,6 +144,8 @@ button.btn-outline-danger:hover {
 
 button.btn-outline-info {
   border: 1px solid #17a2b8;
+  padding: 4px 8px; /* Reduce padding */
+  font-size: 0.8rem; /* Decrease font size */
   color: #17a2b8;
   background-color: transparent;
 }
