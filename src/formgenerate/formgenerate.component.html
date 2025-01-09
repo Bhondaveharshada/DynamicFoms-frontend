@@ -1,147 +1,145 @@
+<div class="d-flex justify-content-center mt-4">
+  <div class=" p-5 shadow w-50">
+    <!-- Form Title -->
+    <h1 class="text-center card-title">{{ formData?.title }}</h1>
 
-<div *ngIf="!userFormData" class="container mt-4">
-    <h1 class="text-center card-title">{{ formData.title }}</h1>
-  
     <form *ngIf="previewForm" [formGroup]="previewForm" class="row g-4">
+      <!-- Form Fields -->
       <div formArrayName="additionalFields" class="w-100">
         <div
           *ngFor="let field of additionalFields.controls; let fieldIndex = index"
           [formGroupName]="fieldIndex"
-          class="col-md-8 col-12 card-body"
+          class="col-12"
         >
+          <!-- Field Label -->
           <label class="form-label fw-bold">
             {{ fields[fieldIndex]['value'] }}
-            <strong *ngIf="fields[fieldIndex]['isrequired']">*</strong>
+            <span *ngIf="fields[fieldIndex]?.isrequired" class="text-danger">*</span>
           </label>
-  
-          <!-- Dynamic Input -->
+          
+
+          <!-- Input Types -->
           <ng-container [ngSwitch]="fields[fieldIndex]['inputType']">
-            <!-- Regular Input -->
             <input
               *ngSwitchCase="'text'"
               type="text"
               class="form-control"
               formControlName="value"
-              [placeholder]="'Enter a value'"
+              placeholder="Enter text"
             />
             <input
               *ngSwitchCase="'number'"
               type="number"
               class="form-control"
               formControlName="value"
-              [placeholder]="'Enter a value'"
+              placeholder="Enter a number"
             />
             <input
               *ngSwitchCase="'email'"
               type="email"
               class="form-control"
               formControlName="value"
-              [placeholder]="'Enter a value'"
+              placeholder="Enter email"
             />
             <input
               *ngSwitchCase="'password'"
               type="password"
               class="form-control"
               formControlName="value"
-              [placeholder]="'Enter a value'"
+              placeholder="Enter password"
             />
             <input
               *ngSwitchCase="'date'"
               type="date"
               class="form-control"
               formControlName="value"
-              [placeholder]="'Select a date and time'"
             />
-  
+
             <!-- Checkbox -->
-    <div *ngSwitchCase="'checkbox'">
-    <div
-      *ngFor="let option of fields[fieldIndex].options; let i = index"
-      class="form-check"
-    >
-      <input
-        class="form-check-input"
-        type="checkbox"
-        id="checkbox{{ fieldIndex }}-{{ i }}"
-        [value]="option"
-        (change)="onCheckboxChange($event, fieldIndex)"
-        [checked]="additionalFields.at(fieldIndex).get('value')?.value.includes(option)"
-      />
-      <label
-        class="form-check-label"
-        [for]="'checkbox' + fieldIndex + '-' + i"
-      >
-        {{ option }}
-      </label>
-    </div>
-  </div>
-  
+            <div *ngSwitchCase="'checkbox'">
+              <div
+                *ngFor="let option of fields[fieldIndex]?.options; let i = index"
+                class="form-check"
+              >
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="checkbox{{ fieldIndex }}-{{ i }}"
+                  [value]="option"
+                  (change)="onCheckboxChange($event, fieldIndex)"
+                  [checked]="additionalFields.at(fieldIndex).get('value')?.value.includes(option)"
+                />
+                <label
+                  class="form-check-label"
+                  [for]="'checkbox' + fieldIndex + '-' + i"
+                >
+                  {{ option }}
+                </label>
+              </div>
+            </div>
 
-
-<!-- Radio -->
-<div *ngSwitchCase="'radio'">
-  <div
-    *ngFor="let option of fields[fieldIndex]?.options; let i = index"
-    class="form-check"
-  >
-    <input
-      class="form-check-input"
-      type="radio"
-      id="radio{{ fieldIndex }}-{{ i }}"
-      [value]="option"
-      formControlName="value"
-    />
-    <label class="form-check-label" [for]="'radio' + fieldIndex + '-' + i">
-      {{ option }}
-    </label>
-  </div>
-</div>
-
+            <!-- Radio -->
+            <div *ngSwitchCase="'radio'">
+              <div
+                *ngFor="let option of fields[fieldIndex]?.options; let i = index"
+                class="form-check"
+              >
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  id="radio{{ fieldIndex }}-{{ i }}"
+                  [value]="option"
+                  formControlName="value"
+                />
+                <label
+                  class="form-check-label"
+                  [for]="'radio' + fieldIndex + '-' + i"
+                >
+                  {{ option }}
+                </label>
+              </div>
+            </div>
           </ng-container>
-  
+          
+
           <!-- Error Messages -->
           <div
-            *ngIf="field.get('value')?.touched && field.get('value')?.invalid"
-            class="text-danger"
+            *ngIf="
+              field.get('value')?.touched &&
+              field.get('value')?.invalid
+            "
+            class="text-danger mt-2"
           >
-            <div *ngIf="field.get('value')?.errors?.['required']">
+            <small *ngIf="field.get('value')?.errors?.['required']">
               This field is required.
-            </div>
-            <div *ngIf="field.get('value')?.errors?.['email']">
+            </small>
+            <small *ngIf="field.get('value')?.errors?.['email']">
               Please enter a valid email address.
-            </div>
-            <div *ngIf="field.get('value')?.errors?.['pattern']">
+            </small>
+            <small *ngIf="field.get('value')?.errors?.['pattern']">
               Only numeric values are allowed.
-            </div>
-            <div *ngIf="field.get('value')?.errors?.['minlength']">
+            </small>
+            <small *ngIf="field.get('value')?.errors?.['minlength']">
               Minimum length required:
-              {{ field.get('value')?.errors?.['minlength']?.requiredLength }}
+              {{
+                field.get('value')?.errors?.['minlength']?.requiredLength
+              }}
               characters.
-            </div>
+            </small>
           </div>
         </div>
       </div>
-  
+
       <!-- Submit Button -->
-      <div class="col-md-12 text-center">
+      <div class="d-flex justify-content-center col-12">
         <button
           type="button"
-          class="btn btn-primary mt-3 w-100 w-sm-auto"
+          class="btn btn-primary px-5"
           (click)="onSubmit()"
         >
           Submit
         </button>
-      
       </div>
     </form>
   </div>
-  
-  <div *ngIf="userFormData" class="form-preview">
-    <h2>{{ formData.title }}</h2>
-    <div *ngFor="let field of userFormData" class="form-field">
-      <label>{{ field.label }}</label>
-      <p>{{ field.value }}</p>
-    </div>
-  </div>
-  
-  
+</div>

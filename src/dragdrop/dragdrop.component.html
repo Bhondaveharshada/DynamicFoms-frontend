@@ -1,5 +1,5 @@
-<div class="d-flex justify-content-start mt-4 mx-3 ">
-  <button type="button" class="btn btn-outline-secondary"  [ngClass]="'btn-outline-secondary'" routerLink="/allForms">Back</button>
+<div class="d-flex justify-content-start mt-4 mx-3">
+  <button type="button" class="btn btn-outline-primary btn-sm"  style="width: 80px;"  [ngClass]="'btn-outline-primary'" routerLink="/allForms">Back</button>
 </div>
 <div class="example-container d-flex">
   <!-- Sidebar for draggable fields -->
@@ -105,7 +105,7 @@
         <button
           type="button"
           class="btn ms-3"
-          [ngClass]="'btn-outline-success'"
+          [ngClass]="'btn btn-outline-primary  '"
           [disabled]="!title || !additionalFields"
           (click)="onSave($event)"
         >

@@ -14,18 +14,18 @@ import { FormService } from '../services/form.service';
 export class DragdropComponent {
  
   constructor(private formService : FormService){}
-
+ // live:string = 'https://forms-beta-red.vercel.app/'
   title: string = ''
   all = [
     'text',
     'number',
-    'label',
     'email',
     'password',
     'date',
     'checkbox',
     'radio'
   ];
+    
   formLink: any = '';
   formFields: any[] = [];
   _id:any

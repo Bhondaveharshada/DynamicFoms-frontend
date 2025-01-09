@@ -1,26 +1,34 @@
 
 <div class="container">
-    <h2>Form Name: {{ formTitle}}</h2>
-    <table class="table-responsive{-sm|-md|-lg|-xl} table table-bordered">
-      <thead>
-        <tr>
-          <ng-container *ngIf="mappedFields.length > 0">
-            <!-- Generate table headers dynamically -->
-            <th *ngFor="let key of mappedFields[0]?.keyValuePairs | objectKeys">
-              {{ key }}
-            </th>
-          </ng-container>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let form of mappedFields">
+  <h2>Form Name: {{ formTitle }}</h2>
+  <table class="table-responsive{-sm|-md|-lg|-xl} table table-bordered">
+    <thead>
+      <tr>
         
-          <!-- Generate table rows dynamically for respective values -->
-          <td *ngFor="let key of form.keyValuePairs | objectKeys">
-            {{ form.keyValuePairs[key] }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        <ng-container *ngIf="mappedFields.length > 0">
+          <!-- Generate table headers dynamically -->
+          <th>Sr. No.</th>
+          <th *ngFor="let key of mappedFields[0]?.keyValuePairs | objectKeys">
+            {{ key }}
+          </th>
+        </ng-container>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let form of mappedFields; let i = index">
+        <!-- Add Sr. No. -->
+        <td>{{ i + 1 }}</td>
+        <!-- Generate table rows dynamically for respective values -->
+        <td *ngFor="let key of form.keyValuePairs | objectKeys">
+          {{ form.keyValuePairs[key] }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="mappedFields.length === 0">
+    <h6 class="text-center mt-3">No responses available.</h6>
   </div>
+</div>
+
   
