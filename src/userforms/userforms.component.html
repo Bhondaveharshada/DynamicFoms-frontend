@@ -1,5 +1,5 @@
 
-<div class="container">
+<div class="container-fluid ">
   <h2>Form Name: {{ formTitle }}</h2>
   <table class="table-responsive{-sm|-md|-lg|-xl} table table-bordered">
     <thead>
@@ -11,6 +11,7 @@
           <th *ngFor="let key of mappedFields[0]?.keyValuePairs | objectKeys">
             {{ key }}
           </th>
+          <th>View Form</th>
         </ng-container>
       </tr>
     </thead>
@@ -22,6 +23,9 @@
         <td *ngFor="let key of form.keyValuePairs | objectKeys">
           {{ form.keyValuePairs[key] }}
         </td>
+        <td>
+          <button class="btn btn-primary" (click)="openmodel(form)" >View</button>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -31,4 +35,45 @@
   </div>
 </div>
 
-  
+
+
+<div
+  class="modal fade"
+  id="viewDetailsModal"
+  tabindex="-1"
+  aria-labelledby="viewDetailsModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewDetailsModalLabel">Form Details</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-striped">
+          <tbody *ngFor="let form of mappedFields; let i = index">
+            <tr *ngFor="let key of form.keyValuePairs | objectKeys">
+              <th>{{ key }}</th>
+              <td>{{form.keyValuePairs[key] }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>  

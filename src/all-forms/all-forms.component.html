@@ -4,10 +4,126 @@
       <button routerLink="/dragdrop" class="btn btn-outline-primary">
        Create New Form
       </button>
+    </div>    
      
+    <!-- Forms List -->
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-12 col-sm-6 col-md-3 mb-5" *ngFor="let form of formFields">
+          <div
+            class="card card-static"
+            [style.height]="'220px'"
+            [style.width]="'100%'"
+            
+            style=" border: 1px solid #ccc; border-radius: 5px;"
+          >
+            <div class="card-header d-flex justify-content-between">
+              <h5>{{ form.title }}</h5>
+              <small>{{ form.createdAt | date: 'short' }}</small>
+            </div>
+            
+            <a
+              [href]="form.formLink"
+              target="_blank"
+              (click)="stopEvent($event)"
+              style="cursor: pointer; text-decoration: underline;"
+              class="link-style"
+              title="click here to go to form "
+            >
+              {{ form.formLink }}
+            </a>
+            <button
+            class="btn btn-outline-dark btn-sm"
+            style="height: 30px; width: 100px; margin-left: 60%;"
+            (click)="openModal(form)"
+            data-bs-dismiss="modal"
+            title="See all details"
+            
+          >
+            See Details
+          </button>
+            
+          </div>
+        </div>
+      </div>
+                   
+      
+      <!-- Bootstrap Modal -->
+      <div
+        class="modal fade"
+        id="formDetailsModal"
+        tabindex="-1"
+        aria-labelledby="formDetailsModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="formDetailsModalLabel">
+                {{ selectedForm?.title }}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <ul>
+                <li *ngFor="let field of selectedForm?.additionalFields">
+                  {{ field.value }} 
+                    @if(field.isrequired){
+                      <strong>*</strong>
+                    }@if(field.options && field.options.length > 0){
+                    options[{{field.options}}]
+                    }
+                 
+                  
+                </li>
+              </ul>
+            </div>
+            <div class="modal-footer">
+              <button 
+              
+                class="btn btn-outline-primary btn-sm"
+                (click)="ViewUserForms(selectedForm?._id)"
+                data-bs-dismiss="modal"
+                title="View all forms submitted by users"
+              >
+                View Responses
+              </button>
+              <button
+                class="btn btn-outline-warning btn-sm"
+                (click)="editForm(selectedForm?._id)"
+                data-bs-dismiss="modal"
+              >
+              Edit
+            </button>
+            <button
+              class="btn btn-outline-danger btn-sm"
+              (click)="deleteForm(selectedForm?._id)"
+              data-bs-dismiss="modal"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
+    
+                
+            
+    
+    
+
   
-  
+
+
+
+
     <!-- Form Modal -->
 <!--     <div [class.modal-active]="showForm">
       <div *ngIf="showForm" class="container card mb-4 shadow">
@@ -187,117 +303,3 @@
         </div>
       </div>
     </div> -->
-  
-         
-        
-             
-                    
-  
-    <!-- Forms List -->
-    <div class="container mt-5">
-      <div class="row">
-        <div class="col-12 col-sm-6 col-md-3 mb-5" *ngFor="let form of formFields">
-          <div
-            class="card card-static"
-            [style.height]="'220px'"
-            [style.width]="'100%'"
-            
-            style=" border: 1px solid #ccc; border-radius: 5px;"
-          >
-            <div class="card-header d-flex justify-content-between">
-              <h5>{{ form.title }}</h5>
-              <small>{{ form.createdAt | date: 'short' }}</small>
-            </div>
-            
-            <a
-              [href]="form.formLink"
-              target="_blank"
-              (click)="stopEvent($event)"
-              style="cursor: pointer; text-decoration: underline;"
-              class="link-style"
-              title="click here to go to form "
-            >
-              {{ form.formLink }}
-            </a>
-            <button
-            class="btn btn-outline-dark btn-sm"
-            style="height: 30px; width: 100px; margin-left: 60%;"
-            (click)="openModal(form)"
-            data-bs-dismiss="modal"
-            title="See all details"
-            
-          >
-            See Details
-          </button>
-            
-          </div>
-        </div>
-      </div>
-      
-    
-      <!-- Bootstrap Modal -->
-      <div
-        class="modal fade"
-        id="formDetailsModal"
-        tabindex="-1"
-        aria-labelledby="formDetailsModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="formDetailsModalLabel">
-                {{ selectedForm?.title }}
-              </h5>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div class="modal-body">
-              <ul>
-                <li *ngFor="let field of selectedForm?.additionalFields">
-                  {{ field.value }} 
-                  <strong *ngIf="field.isrequired">*</strong>
-                  ({{ field.inputType }}), options({{field.options}})
-                </li>
-              </ul>
-            </div>
-            <div class="modal-footer">
-              <button 
-              
-                class="btn btn-outline-primary btn-sm"
-                (click)="ViewUserForms(selectedForm?._id)"
-                data-bs-dismiss="modal"
-                title="View all forms submitted by users"
-              >
-                View Responses
-              </button>
-              <button
-                class="btn btn-outline-warning btn-sm"
-                (click)="editForm(selectedForm?._id)"
-                data-bs-dismiss="modal"
-                
-              >
-                Edit
-              </button>
-              <button
-                class="btn btn-outline-danger btn-sm"
-                (click)="deleteForm(selectedForm?._id)"
-                data-bs-dismiss="modal"
-              >
-                Delete
-              </button>
-            </div>
-            
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    
-
-  </div>
-  

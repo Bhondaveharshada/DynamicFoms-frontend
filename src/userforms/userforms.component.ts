@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule,ActivatedRoute } from '@angular/router';
 import { ObjectKeysPipe } from '../pipes/object-keys.pipe';
 import { FormService } from '../services/form.service';
-
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-userforms',
@@ -16,6 +16,7 @@ export class UserformsComponent implements OnInit {
 
   formTitle:any
   mappedFields: any[] = []; 
+  selectedFormDetails: any = {};
   constructor(private formservice:FormService, private route:ActivatedRoute, private objectkeys: ObjectKeysPipe){}
 
   ngOnInit(): void {
@@ -58,4 +59,12 @@ export class UserformsComponent implements OnInit {
           
   }
 
-}
+
+  openmodel(form:any){
+    const modalElement = document.getElementById('viewDetailsModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+    }
+  }
+  }
