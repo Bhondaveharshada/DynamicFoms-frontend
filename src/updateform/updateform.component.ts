@@ -42,7 +42,7 @@ export class UpdateformComponent implements OnInit {
         this.title = res.result.title; // Set the form title
         this.additionalFields = res.result.additionalFields.map((field: any) => ({
           inputType: field.inputType,
-          label: field.label,
+          label: field.value,
           required: field.isrequired,
           options: field.options || [] // Default to an empty array if options are missing
         }));
@@ -118,7 +118,7 @@ onUpdate(event: Event): void {
   const updatedForm = {
     title: this.title,
     additionalFields: this.additionalFields.map((field) => ({
-      label: field.label,
+      value: field.label,
       inputType: field.inputType,
       isrequired: field.required,
       options: field.options, 

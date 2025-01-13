@@ -1,51 +1,51 @@
-<div class="container-fluid mt-3">
+<div class="container-fluid mt-5">
     <h2>Forms</h2>
-    <div class="d-flex justify-content-end align-items-center">
+    <div class="d-flex justify-content-end align-items-center mb-4 ms-5">
       <button routerLink="/dragdrop" class="btn btn-outline-primary">
        Create New Form
       </button>
     </div>    
      
     <!-- Forms List -->
-<div class="container mt-5">
-  <div class="row row1-container gy-4">
-    <div
-      class="col-12 col-sm-6 col-md-4 col-lg-3 box cyan"
-      *ngFor="let form of formFields"
-    >
-      <div class="card h-100">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h6 class="mb-0">{{ form.title }}</h6>
-          <small>{{ form.createdAt | date: 'short' }}</small>
-        </div>
-
-        <div class="card-body">
-          <a
-            [href]="form.formLink"
-            target="_blank"
-            (click)="stopEvent($event)"
-            class="link-style"
-            title="Click here to go to form"
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-12 col-sm-6 col-md-3 mb-5" *ngFor="let form of formFields">
+          <div
+            class="card card-static"
+            [style.height]="'220px'"
+            [style.width]="'100%'"
+            
+            style=" border: 1px solid #ccc; border-radius: 5px;"
           >
-            {{ form.formLink }}
-          </a>
-        </div>
-
-        <div class="card-footer text-end">
-          <button
+            <div class="card-header d-flex justify-content-between">
+              <h5>{{ form.title }}</h5>
+              <small>{{ form.createdAt | date: 'short' }}</small>
+            </div>
+            
+            <a
+              [href]="form.formLink"
+              target="_blank"
+              (click)="stopEvent($event)"
+              style="cursor: pointer; text-decoration: underline;"
+              class="link-style"
+              title="click here to go to form "
+            >
+              {{ form.formLink }}
+            </a>
+            <button
             class="btn btn-outline-dark btn-sm"
+            style="height: 30px; width: 100px; margin-left: 60%;"
             (click)="openModal(form)"
+            data-bs-dismiss="modal"
             title="See all details"
+            
           >
             See Details
           </button>
+            
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
-    
                    
       
       <!-- Bootstrap Modal -->
@@ -72,7 +72,7 @@
             <div class="modal-body">
               <ul>
                 <li *ngFor="let field of selectedForm?.additionalFields">
-                  {{ field.label }} 
+                  {{ field.value }} 
                     @if(field.isrequired){
                       <strong>*</strong>
                     }@if(field.options && field.options.length > 0){
@@ -112,7 +112,7 @@
       </div>
     </div>
   </div>
-
+</div>
     
                 
             
@@ -124,3 +124,182 @@
 
 
 
+    <!-- Form Modal -->
+<!--     <div [class.modal-active]="showForm">
+      <div *ngIf="showForm" class="container card mb-4 shadow">
+        <div class="card-body">
+          <h3>{{ isEditing ? 'Edit Form' : 'Create New Form' }}</h3>
+          <form (ngSubmit)="onSave($event)" #userForm="ngForm">
+            <!-- Form Title 
+            <div class="mb-3">
+              <label for="title" class="form-label fw-bold">Form Title</label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                class="form-control"
+                [(ngModel)]="title"
+                required
+                placeholder="Enter form title"
+              />
+            </div>
+  
+            <div class="mb-3" *ngFor="let field of additionalFields; let i = index">
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <input
+                    type="text"
+                    [(ngModel)]="field.value"
+                    [name]="'value_' + i"
+                    class="form-control"
+                    placeholder="Field Name"
+                    required
+                  />
+                </div>
+                <div class="col-md-3">
+                  <select
+                    [(ngModel)]="field.inputType"
+                    [name]="'inputType_' + i"
+                    class="form-select"
+                  >
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <option value="email">Email</option>
+                    <option value="password">Password</option>
+                    <option value="datetime-local">Date</option>
+                    <option value="checkbox">Checkbox</option>
+                    <option value="radio">radio</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <select
+                    [(ngModel)]="field.isrequired"
+                    [name]="'isrequired_' + i"
+                    class="form-select"
+                  >
+                    <option value="required">Required</option>
+                    <option value="optional">Optional</option>
+                  </select>
+                </div>
+
+                
+                <div class="col-md-2">
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    (click)="deleteField(i)"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            
+            
+             <div *ngIf="field.inputType === 'checkbox'">
+            
+              <div 
+                *ngFor="let option of field.checkboxOptions; let j = index; trackBy: trackByIndex" 
+                class="row mb-2"
+              >
+                <div class="col-9">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="field.checkboxOptions[j]" 
+                    [name]="'checkbox_' + i + '_' + j" 
+                    class="form-control form-control-sm" 
+                    placeholder="Enter checkbox option"
+                  />
+                </div>
+                <div class="col-3 d-flex justify-content-start">
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-danger btn-sm" 
+                    (click)="removeCheckboxOption(field, j)"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            
+              <button 
+                type="button" 
+                class="btn btn-outline-primary btn-sm mt-2" 
+                (click)="addCheckboxOption(field)"
+              >
+                Add Checkbox
+              </button>
+            </div>
+            
+          
+         
+          <div *ngIf="field.inputType === 'radio'">
+            <div 
+              *ngFor="let option of field.radioButtonOptions; let j = index; trackBy: trackByIndex" 
+              class="row mb-2"
+            >
+              <div class="col-9">
+                <input 
+                  type="text" 
+                  [(ngModel)]="field.radioButtonOptions[j]" 
+                  [name]="'radio_' + i + '_' + j" 
+                  class="form-control form-control-sm" 
+                  placeholder="Enter radio button option"
+                />
+              </div>
+              <div class="col-3 d-flex justify-content-start">
+                <button 
+                  type="button" 
+                  class="btn btn-outline-danger btn-sm" 
+                  (click)="removeRadioOption(field, j)"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          
+                       <button 
+              type="button" 
+              class="btn btn-outline-primary btn-sm mt-2" 
+              (click)="addRadioOption(field)"
+            >
+              Add Radio Button
+            </button>
+          </div>
+          
+          
+
+</div>
+              
+          
+            <div class="d-flex justify-content-center my-3">
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                (click)="addField()"
+              >
+                Add Field
+              </button>
+            
+              <button
+                type="submit"
+                class="btn btn-outline-success btn-sm"
+                [ngClass]="isEditing ? 'btn-outline-warning' : 'btn-outline-success'"
+                [disabled]="!title || userForm.invalid"
+              >
+                {{ isEditing ? 'Update Form' : 'Save Form' }}
+              </button>
+            
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                (click)="onCancel()"
+              >
+                Cancel
+              </button>
+            </div>
+            
+
+          </form>
+        </div>
+      </div>
+    </div> -->

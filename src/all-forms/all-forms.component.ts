@@ -139,12 +139,95 @@ editForm(id:any): void {
   console.log(this.formIdToEdit);
   
 
- 
+  // Populate the form fields
+ /*  this.title = form.title;
+  this.additionalFields = form.additionalFields.map((field: any) => ({
+    value: field.value,
+    inputType: field.inputType,
+    isrequired:field.isrequired,
+    checkboxOptions:field.checkboxOptions,
+    numberOfCheckboxes: field.numberOfCheckboxes, 
+    radioButtonOptions:field.radioButtonOptions, 
+    numberOfRadioButtons: field.numberOfRadioButtons, 
+  })); */
+
 }
 
 // Save or Update form data
-/*
+/* onSave(event: Event): void {
+  event.preventDefault(); // Prevent the default form submission behavior
 
+  const formId = new Date().getTime();
+  const formData = {
+    title: this.title,
+    additionalFields: this.additionalFields.map((field) => ({
+      value: field.value,
+      inputType: field.inputType,
+      isrequired: field.isrequired,
+      checkboxOptions: field.checkboxOptions, // Include options if available
+      radioButtonOptions:field.radioButtonOptions,
+    
+    })),
+  };
+
+  if (this.isEditing && this.formIdToEdit) {
+    // Update existing form
+    this.formService.updateFormFields(this.formIdToEdit, formData).subscribe({
+      next: (res: any) => {
+        console.log('Form updated successfully:', res);
+        this.getAllFormFields();
+        this.resetForm();
+      },
+      error: (err: any) => console.error('Error updating form:', err),
+    });
+  } else {
+    // Save new form
+    const formId = new Date().getTime();
+    this.formService.addFormFields(formData, formId).subscribe({
+      next: (res: any) => {
+        console.log('Form saved successfully:', res);
+        const id = res.result._id;
+        this._id = id;
+        this.formLink = `${window.location.origin}/form/${id}/${formId}`;
+        console.log('formlink form onsave fun', typeof this.formLink, this.formLink);
+        const stringLink = `${this.formLink}`;
+        console.log('String link', String(stringLink));
+        
+        this.getAllFormFields();
+      },
+      error: (err: any) => console.error('Error saving form:', err),
+    });
+  }
+}
+
+removeCheckboxOption(field: any, index: number): void {
+  if (index >= 0 && index < field.checkboxOptions.length) {
+    field.checkboxOptions.splice(index, 1); // Remove the option
+  }
+}
+
+// Method to add a new checkbox option
+addCheckboxOption(field: any): void {
+  if (!field.checkboxOptions) {
+    field.checkboxOptions = []; // Initialize array if not defined
+  }
+  field.checkboxOptions.push(''); // Add a new empty option
+}
+
+
+removeRadioOption(field: any, index: number): void {
+  if (index >= 0 && index < field.radioButtonOptions.length) {
+    field.radioButtonOptions.splice(index, 1); 
+  }
+}
+
+
+addRadioOption(field: any): void {
+  if (!field.radioButtonOptions) {
+    field.radioButtonOptions = []; 
+  }
+  field.radioButtonOptions.push(''); 
+}
  */
 
 trackByIndex(index: number): number {
