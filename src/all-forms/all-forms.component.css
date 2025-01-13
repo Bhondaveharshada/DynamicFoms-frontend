@@ -106,7 +106,7 @@ body {
   border: none;
   border-radius: 8px;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.6s ease, box-shadow 0.3s ease;
   background: #ffffff;
 }
 
@@ -116,63 +116,98 @@ body {
 }
 
 /* Card Header */
-.card-header {
-  padding: 15px;
-  font-size: 18px;
-  font-weight: 600;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
-.card-header h5 {
-  margin: 0;
-  color:black;
-}
-
-.card-header small {
-  color: black;
-}
 
 /* Card Body */
 .card-body {
-  padding: 15px;
+  padding: 1px;
   color: #333333;
 }
+/* General card styling */
 .card-static {
-  width: 300px; /* Fixed width */
-  height: 400px; /* Fixed height */
-  overflow: hidden; /* Hide overflowing content */
- 
-  transition: all 0.3s ease; /* Smooth transition for expand */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out, box-shadow 0.2s ease-in-out;
+  border: none;
+  border-radius: 8px;
 }
 
+/* Card hover effect */
 .card-static:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle hover effect */
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-.card-static.expanded {
-  height: auto; /* Expand height when selected */
-  overflow: visible; /* Show content when expanded */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* More shadow on expansion */
+/* Card header styling */
+.card-header{
+  background: rgba(248, 245, 245, 0.641);
+  color: black;
+  border-bottom: 1px solid #e9ecef;
+  padding: 10px 15px;
+  font-weight: bold;
+  border-radius: 8px 8px 0 0;
 }
 
-.card-body ul {
-  list-style: none; /* Remove bullet points */
-  padding: 0;
+/* Link styling */
+.link-style {
+  color: #4188eb;
+  text-decoration: none;
+  font-size: 14px;
+  margin: 10px;
+  display: block;
+  word-wrap: break-word;
 }
 
-.card-body ul li {
-  margin-bottom: 5px;
+.link-style:hover {
+  color: #442af1;
+  text-decoration: underline;
 }
 
-.card-body a {
-  word-wrap: break-word; /* Ensure long URLs break into the next line */
-  color: #007bff;
+/* Button alignment */
+.card-static .btn {
+  margin-top: 10px;
+  margin-left: auto;
+  display: block;
 }
 
-.card-body a:hover {
-  text-decoration: underline; /* Add underline on hover */
+/* Modal styling */
+.modal-header {
+  background-color: #f1f1f1;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Card footer styling */
+.card-footer {
+  background: rgba(248, 245, 245, 0.641);
+  
+  padding: 10px 15px;
+  border-radius: 0 0 8px 8px;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Button styling inside footer */
+.card-footer .btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.card-footer .btn-outline-dark:hover {
+  background:linear-gradient(135deg, #007bff, #6f42c1);
+  color: white;
+}
+
+.card-footer .btn-outline-warning:hover {
+  background-color: #ffc107;
+  color: black;
+}
+
+.card-footer .btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
 }
 
 

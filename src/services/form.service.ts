@@ -12,7 +12,10 @@ export class FormService {
  
 
   addform(data:any,fieldsId:any){
+    console.log("data from addform",data);
     const payload = { ...data, fieldsId };
+    
+    
    return this.http.post(`${environment.api}/addform`,payload)
   }
 

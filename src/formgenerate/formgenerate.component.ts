@@ -10,7 +10,7 @@ interface Field {
   options?: string[]; // Unified for both checkboxes and radio buttons
   inputType: string;
   isrequired: string;
-  value: string;
+  label: string;
   _id: string;
 }
 
@@ -74,6 +74,7 @@ export class FormgenerateComponent {
           additionalFields: this.fb.array(
             this.formData.additionalFields.map((field: any) =>
               this.fb.group({
+                label: [field.label, Validators.required], 
                 value: field.inputType === 'checkbox' ? [[]] : ['', this.getDynamicValidators(field)],
                 inputType: [field.inputType, Validators.required],
                 isrequired: [field.isrequired],
@@ -147,6 +148,7 @@ export class FormgenerateComponent {
         next:(res:any)=>{
           const fields = this.fields;
           const userform = res.result.additionalFields
+         
           
           Swal.fire({
             title: 'Success!',
@@ -156,9 +158,10 @@ export class FormgenerateComponent {
         });
           const id = res.result._id
           console.log("Id",id);
+          console.log("additionalfields from db", userform);
    
          this.userFormData = this.processSubmittedData(fields,userform)
-         console.log("userformData",this.userFormData);
+        
          
          
           

@@ -13,7 +13,7 @@
         >
           <!-- Field Label -->
           <label class="form-label fw-bold">
-            {{ fields[fieldIndex]['value'] }}
+            {{ fields[fieldIndex]['label'] }}
             <span *ngIf="fields[fieldIndex]?.isrequired" class="text-danger">*</span>
           </label>
           
@@ -34,6 +34,13 @@
               formControlName="value"
               placeholder="Enter a number"
             />
+            <textarea
+              *ngSwitchCase="'textarea'"
+              type="value"
+              class="form-control"
+              formControlName="value"
+             
+            ></textarea>
             <input
               *ngSwitchCase="'email'"
               type="email"
