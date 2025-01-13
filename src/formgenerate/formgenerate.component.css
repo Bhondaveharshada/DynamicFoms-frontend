@@ -10,7 +10,8 @@ body {
     min-height: 100vh;
   }
   
-  /* Container Styling */
+  
+  /* Styling the container*/
   .container {
     max-width: 900px;
     margin: 2rem auto;
