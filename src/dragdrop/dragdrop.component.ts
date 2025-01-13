@@ -23,7 +23,8 @@ export class DragdropComponent {
     'password',
     'date',
     'checkbox',
-    'radio'
+    'radio',
+    'textarea'
   ];
     
   formLink: any = '';
@@ -107,7 +108,7 @@ export class DragdropComponent {
    const formData = {
      title: this.title,
      additionalFields: this.additionalFields.map((field) => ({
-       value: field.label,
+       label: field.label,
        inputType: field.inputType,
        isrequired: field.required,
        options: field.options || null,

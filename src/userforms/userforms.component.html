@@ -1,6 +1,8 @@
-
 <div class="container-fluid ">
-  <h2>Form Name: {{ formTitle }}</h2>
+  <div class="d-flex justify-content-between mt-4">
+    <h2>Form Name: {{ formTitle }}</h2>
+    <button  *ngIf="mappedFields.length > 0" class="btn btn-success" (click)="exportToExcel()">Export to Excel</button>
+  </div>
   <table class="table-responsive{-sm|-md|-lg|-xl} table table-bordered">
     <thead>
       <tr>
@@ -24,7 +26,7 @@
           {{ form.keyValuePairs[key] }}
         </td>
         <td>
-          <button class="btn btn-primary" (click)="openmodel(form)" >View</button>
+          <button class="btn btn-primary" (click)="openmodel(i)" >View</button>
         </td>
       </tr>
     </tbody>
@@ -56,11 +58,11 @@
         ></button>
       </div>
       <div class="modal-body">
-        <table class="table table-striped">
-          <tbody *ngFor="let form of mappedFields; let i = index">
-            <tr *ngFor="let key of form.keyValuePairs | objectKeys">
+        <table class="table table-striped ">
+          <tbody>
+            <tr *ngFor="let key of selectedFormDetails.keyValuePairs | objectKeys">
               <th>{{ key }}</th>
-              <td>{{form.keyValuePairs[key] }}</td>
+              <td>{{ selectedFormDetails.keyValuePairs[key] }}</td>
             </tr>
           </tbody>
         </table>
