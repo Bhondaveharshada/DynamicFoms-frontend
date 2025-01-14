@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-center mt-4">
-  <div class=" p-5 shadow w-50">
+  <div *ngIf="!isPreviewMode" class=" p-5 shadow w-50">
     <!-- Form Title -->
     <h1 class="text-center card-title">{{ formData?.title }}</h1>
 
@@ -151,5 +151,23 @@
         </button>
       </div>
     </form>
+  </div>
+
+
+  
+</div>
+
+<div *ngIf="isPreviewMode" class="d-flex justify-content-center mt-4">
+  <div class="p-4  rounded bg-white w-75">
+    <button class="btn btn-outline-primary mb-4" (click)="onBack()">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <div class="container form-preview">
+      <h2 class="text-center text-primary mb-4">{{ formData?.title }}</h2>
+      <div *ngFor="let field of userFormData" class="form-field mb-3">
+        <label class="fw-bold">{{ field.label }}</label>
+        <p class="form-control border-0 bg-light">{{ field.value }}</p>
+      </div>
+    </div>
   </div>
 </div>

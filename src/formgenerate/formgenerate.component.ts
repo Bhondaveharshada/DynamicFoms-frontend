@@ -31,6 +31,7 @@ export class FormgenerateComponent {
   formData: any = null; // Static title and question
   fields:  Field[] = [];
   formfieldId:any;
+  isPreviewMode = false;
   checkboxoptions: string[] = [];
   radioButtonOptions:string[]=[];
   
@@ -160,11 +161,9 @@ export class FormgenerateComponent {
           console.log("Id",id);
           console.log("additionalfields from db", userform);
    
-         this.userFormData = this.processSubmittedData(fields,userform)
-        
+          this.userFormData = this.processSubmittedData(fields, userform); 
+          this.isPreviewMode = true;
          
-         
-          
         },error :(err:any)=>{
           console.log("errrorrr");
         }  
@@ -174,23 +173,21 @@ export class FormgenerateComponent {
       console.log("Form is invalid");
     }
   }
+         
+  onBack() {
+    this.isPreviewMode = false; // Show the form when back is clicked
+  }
+          
+
 
   processSubmittedData(fields: any[], additionalFields: any[]): any[] {
-    // Validate inputs
-    if (!Array.isArray(fields) || !Array.isArray(additionalFields)) {
-      console.error("Invalid fields or additionalFields:", { fields, additionalFields });
-      return [];
-    }
-  
-   
-    return fields.map((field: any, index: number) => {
-      return {
-        label: field.value || "Unknown Field", // Handle missing value
-        value: additionalFields[index]?.value || "No Value", // Handle missing value
-      };
-    });
+    return fields.map((field: any, index: number) => ({
+      label: field.label || "Unknown Field",
+      value: additionalFields[index]?.value || "No Value"
+    }));
+  }
+
   }
 
 
 
-}

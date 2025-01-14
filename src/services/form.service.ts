@@ -56,4 +56,8 @@ export class FormService {
   fetchUserForms(id:any){
     return this.http.get(`${environment.api}/getallUserForms/${id}`);
   }
+
+  deleteOneUserForm(id:any){
+    return this.http.delete(`${environment.api}/deleteUserForm/${id}`);
+  }
 }

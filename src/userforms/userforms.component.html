@@ -13,7 +13,7 @@
           <th *ngFor="let key of mappedFields[0]?.keyValuePairs | objectKeys">
             {{ key }}
           </th>
-          <th>View Form</th>
+          <th>Actions</th>
         </ng-container>
       </tr>
     </thead>
@@ -26,7 +26,8 @@
           {{ form.keyValuePairs[key] }}
         </td>
         <td>
-          <button class="btn btn-primary" (click)="openmodel(i)" >View</button>
+          <button class="btn btn-outline-primary me-2" (click)="openmodel(i)" > <i class="bi bi-eye"></i></button>
+          <button class="btn btn-outline-danger" (click)="deleteEntry(form.formId, i)"><i class="bi bi-trash"></i></button>
         </td>
       </tr>
     </tbody>

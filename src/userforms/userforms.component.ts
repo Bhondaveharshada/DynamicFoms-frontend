@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule,ActivatedRoute } from '@angular/router';
 import { ObjectKeysPipe } from '../pipes/object-keys.pipe';
 import { FormService } from '../services/form.service';
+import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import * as FileSaver from 'file-saver';
 declare var bootstrap: any;
@@ -78,6 +79,39 @@ export class UserformsComponent implements OnInit {
       const modal = new bootstrap.Modal(modalElement);
       modal.show();
     }
+  }
+
+  deleteEntry(Id: any, index: number): void {
+    // Show a confirmation alert before deleting
+    console.log(Id,"form._id");
+    
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'You will not be able to recover this entry!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.formservice.deleteOneUserForm(Id).subscribe({
+          next: (res:any) => {
+            this.mappedFields.splice(index, 1); // Remove the entry from the array
+            Swal.fire({
+              title: 'Deleted!',
+              text: 'Your entry has been deleted.',
+              icon: 'success',
+              timer: 1500,        // Auto close after 2 seconds (2000 ms)
+              showConfirmButton: false // Hides the confirmation button
+            });
+          },
+          error: (err:any) => {
+            console.error('Error deleting entry:', err);
+            Swal.fire('Error', 'Failed to delete the entry. Please try again.', 'error');
+          }
+        });
+      }
+    });
   }
 
   exportToExcel(): void {
