@@ -25,7 +25,8 @@ export class UpdateformComponent implements OnInit {
     'password',
     'date',
     'checkbox',
-    'radio'
+    'radio',
+    'textarea'
   ];
 
   constructor(private activatedRoute : ActivatedRoute, private formService: FormService ){}
