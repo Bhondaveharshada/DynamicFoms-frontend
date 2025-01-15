@@ -1,4 +1,5 @@
 <div class="d-flex justify-content-center mt-4">
+  
   <div *ngIf="!isPreviewMode" class=" p-5 shadow w-50">
     <!-- Form Title -->
     <h1 class="text-center card-title">{{ formData?.title }}</h1>
@@ -127,7 +128,7 @@
               Please enter a valid email address.
             </small>
             <small *ngIf="field.get('value')?.errors?.['pattern']">
-              Only numeric values are allowed.
+              Only numeric values are allowed. it must be exactly 10 digits
             </small>
             <small *ngIf="field.get('value')?.errors?.['minlength']">
               Minimum length required:
@@ -135,6 +136,9 @@
                 field.get('value')?.errors?.['minlength']?.requiredLength
               }}
               characters.
+            </small>
+            <small *ngIf="field.get('value')?.errors?.['requiredTrue']">
+              You must check at least 1 box to proceed.
             </small>
           </div>
         </div>

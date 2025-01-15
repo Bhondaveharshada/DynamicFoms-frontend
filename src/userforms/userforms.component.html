@@ -1,14 +1,13 @@
-<div class="container-fluid ">
+<div class="container-fluid">
   <div class="d-flex justify-content-between mt-4">
     <h2>Form Name: {{ formTitle }}</h2>
-    <button  *ngIf="mappedFields.length > 0" class="btn btn-success" (click)="exportToExcel()">Export to Excel</button>
+    <button *ngIf="mappedFields.length > 0" class="btn btn-success" (click)="exportToExcel()">Export to Excel</button>
   </div>
-  <table class="table-responsive{-sm|-md|-lg|-xl} table table-bordered">
+  
+  <table class="table table-striped table-hover table-bordered table-responsive-md mt-4">
     <thead>
       <tr>
-        
         <ng-container *ngIf="mappedFields.length > 0">
-          <!-- Generate table headers dynamically -->
           <th>Sr. No.</th>
           <th *ngFor="let key of mappedFields[0]?.keyValuePairs | objectKeys">
             {{ key }}
@@ -19,15 +18,17 @@
     </thead>
     <tbody>
       <tr *ngFor="let form of mappedFields; let i = index">
-        <!-- Add Sr. No. -->
         <td>{{ i + 1 }}</td>
-        <!-- Generate table rows dynamically for respective values -->
         <td *ngFor="let key of form.keyValuePairs | objectKeys">
           {{ form.keyValuePairs[key] }}
         </td>
         <td>
-          <button class="btn btn-outline-primary me-2" (click)="openmodel(i)" > <i class="bi bi-eye"></i></button>
-          <button class="btn btn-outline-danger" (click)="deleteEntry(form.formId, i)"><i class="bi bi-trash"></i></button>
+          <button class="btn btn-outline-primary me-2" (click)="openmodel(i)">
+            <i class="bi bi-eye"></i>
+          </button>
+          <button class="btn btn-outline-danger" (click)="deleteEntry(form.formId, i)">
+            <i class="bi bi-trash"></i>
+          </button>
         </td>
       </tr>
     </tbody>

@@ -32,8 +32,7 @@ export class FormgenerateComponent {
   fields:  Field[] = [];
   formfieldId:any;
   isPreviewMode = false;
-  checkboxoptions: string[] = [];
-  radioButtonOptions:string[]=[];
+
   
   constructor(private fb: FormBuilder,private route: ActivatedRoute, private formService:FormService, ) {
   
@@ -118,7 +117,7 @@ export class FormgenerateComponent {
       case 'email':
         return [Validators.required, Validators.email];
       case 'number':
-        return [Validators.required, Validators.pattern(/^[0-9]+$/)];
+        return [Validators.required, Validators.pattern(/^[0-9]{10}$/)];
       case 'text':
         return [Validators.required, Validators.minLength(3)];
       case 'password':
@@ -170,6 +169,7 @@ export class FormgenerateComponent {
         }) ;
       console.log("Submitted Form Data:", this.previewForm.value);
     } else {
+
       console.log("Form is invalid");
     }
   }

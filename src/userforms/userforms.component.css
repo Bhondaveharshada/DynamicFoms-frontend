@@ -26,41 +26,41 @@ body {
   
   
   /* Table Styling */
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-  
-  .table thead {
-    background-color: #f1f3f4;
-    text-align: left;
-  }
-  
-  .table thead th {
-    font-size: 16px;
-    font-weight: 500;
-    color: #555555;
-    padding: 12px 15px;
-    border: 1px solid #e0e0e0;
-  }
-  
-  .table tbody tr {
-    background-color: #ffffff;
-    transition: background-color 0.3s ease;
-  }
-  
-  .table tbody tr:hover {
-    background-color: #f9f9f9;
-  }
-  
-  .table tbody td {
-    font-size: 14px;
-    color: #333333;
-    padding: 10px 15px;
-    border: 1px solid #e0e0e0;
-    word-wrap: break-word;
-  }
+/* Apply a consistent width to action buttons */
+td button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Center align all table cells */
+table th, table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Add a subtle shadow and rounded corners to the table */
+table {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Change the hover effect for rows */
+table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Style the table headers */
+table thead th {
+  background-color: #5393f9;
+  color: #ffffff;
+  font-weight: bold;
+}
+
   
   /* Responsive Design */
   @media (max-width: 768px) {
