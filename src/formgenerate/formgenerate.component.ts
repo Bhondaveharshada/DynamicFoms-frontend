@@ -148,21 +148,28 @@ export class FormgenerateComponent {
         next:(res:any)=>{
           const fields = this.fields;
           const userform = res.result.additionalFields
-         
-          
-          Swal.fire({
-            title: 'Success!',
-            text: 'form submitted successfully',
-            icon: 'success',
-            confirmButtonText: 'OK'
-        });
+           const Toast = Swal.mixin({
+                        toast: true,
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true,
+                        didOpen: (toast) => {
+                          toast.onmouseenter = Swal.stopTimer;
+                          toast.onmouseleave = Swal.resumeTimer;
+                        }
+                      });
+                      Toast.fire({
+                        icon: "success",
+                        title: "Form Submitted successfully"
+                      }).then(()=>{
+                        this.isPreviewMode =true
+                      })
           const id = res.result._id
           console.log("Id",id);
           console.log("additionalfields from db", userform);
-   
           this.userFormData = this.processSubmittedData(fields, userform); 
-          this.isPreviewMode = true;
-         
+
         },error :(err:any)=>{
           console.log("errrorrr");
         }  
@@ -173,6 +180,9 @@ export class FormgenerateComponent {
       console.log("Form is invalid");
     }
   }
+   
+        
+         
          
   onBack() {
     this.isPreviewMode = false; // Show the form when back is clicked

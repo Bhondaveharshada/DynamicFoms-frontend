@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { RouterModule,ActivatedRoute } from '@angular/router';
+import { RouterModule,ActivatedRoute,Router} from '@angular/router';
 import { ObjectKeysPipe } from '../pipes/object-keys.pipe';
 import { FormService } from '../services/form.service';
 import Swal from 'sweetalert2';
@@ -23,12 +23,12 @@ export class UserformsComponent implements OnInit {
   mappedFields: any[] = []; 
   selectedFormDetails: any = {};
   
-  constructor(private formservice:FormService, private route:ActivatedRoute, private objectkeys: ObjectKeysPipe){}
+  constructor(private router:Router ,private formservice:FormService, private activatedroute:ActivatedRoute, private objectkeys: ObjectKeysPipe){}
 
 
   
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
+    const id = this.activatedroute.snapshot.paramMap.get('id');
     console.log(id);
     this.formservice.fetchUserForms(id).subscribe({
       next: (res: any) => {
@@ -91,18 +91,27 @@ export class UserformsComponent implements OnInit {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it!',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
+ 
     }).then((result) => {
       if (result.isConfirmed) {
         this.formservice.deleteOneUserForm(Id).subscribe({
           next: (res:any) => {
             this.mappedFields.splice(index, 1); // Remove the entry from the array
-            Swal.fire({
-              title: 'Deleted!',
-              text: 'Your entry has been deleted.',
-              icon: 'success',
-              timer: 1500,        // Auto close after 2 seconds (2000 ms)
-              showConfirmButton: false // Hides the confirmation button
+            const Toast = Swal.mixin({
+              toast: true,
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 2000,
+              timerProgressBar: true,
+              didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+              }
+            });
+            Toast.fire({
+              icon: "success",
+              title: "Your Entry has been deleted"
             });
           },
           error: (err:any) => {
@@ -140,7 +149,9 @@ export class UserformsComponent implements OnInit {
     FileSaver.saveAs(data, `${fileName}_export_${new Date().getTime()}${EXCEL_EXTENSION}`);
   }
 
-  
+  onBack(){
+    this.router.navigate(['/allForms'])
+  }
 }
 
 

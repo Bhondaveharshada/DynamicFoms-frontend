@@ -6,6 +6,7 @@ import { response } from 'express';
 import { CommonModule } from '@angular/common';
 import type { BootstrapOptions as bootstrap } from '@angular/core';
 import { Notyf } from 'notyf';
+import Swal from 'sweetalert2';
 import 'notyf/notyf.min.css';
 declare var bootstrap :any;
 
@@ -142,10 +143,6 @@ editForm(id:any): void {
  
 }
 
-// Save or Update form data
-/*
-
- */
 
 trackByIndex(index: number): number {
   return index; // Use the index as the unique identifier
@@ -158,9 +155,44 @@ deleteForm(id:any){
   if (confirm('Are you sure you want to delete this form?')) {
     this.formService.deleteFormFields(id).subscribe({
       next: (res:any) => {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          }
+        });
+        Toast.fire({
+          icon: "success",
+          title: "form deleted"
+        });
         this.getAllFormFields(); // Refresh the list of forms
       },
-      error: (err:any) => console.error('Error deleting form:', err),
+      error: (err:any) => { 
+        console.error('Error deleting form:', err) 
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end", // You can change this to "bottom-end" or "center" if needed
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          iconColor: 'red', // Error color for the icon
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          }
+        });
+        
+        Toast.fire({
+          icon: "error", // Use "error" for an error message
+          title: "Failed to delete the form. Please try again."
+        });
+        
+      }
     });
   }
 }

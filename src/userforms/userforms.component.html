@@ -1,10 +1,13 @@
-<div class="container-fluid">
-  <div class="d-flex justify-content-between mt-4">
+<div class="container-fluid ">
+  <button class="btn btn-outline-primary btn-sm mt-2 mb-1 px-2 py-1" (click)="onBack()">
+    <i class="bi bi-arrow-left"></i> Back
+  </button>
+  <div class="d-flex justify-content-between mt-1">
     <h2>Form Name: {{ formTitle }}</h2>
-    <button *ngIf="mappedFields.length > 0" class="btn btn-success" (click)="exportToExcel()">Export to Excel</button>
+    <button *ngIf="mappedFields.length > 0" class="btn btn-success btn-md mb-1 px-2 py-2" (click)="exportToExcel()">Export to Excel</button>
   </div>
   
-  <table class="table table-striped table-hover table-bordered table-responsive-md mt-4">
+  <table class="table table-striped table-hover table-bordered table-responsive-md mt-2">
     <thead>
       <tr>
         <ng-container *ngIf="mappedFields.length > 0">
@@ -22,13 +25,15 @@
         <td *ngFor="let key of form.keyValuePairs | objectKeys">
           {{ form.keyValuePairs[key] }}
         </td>
-        <td>
-          <button class="btn btn-outline-primary me-2" (click)="openmodel(i)">
-            <i class="bi bi-eye"></i>
+        <td >
+         <div class="d-flex justify-content-center gap-2 ">
+          <button class="btn btn-outline-primary px-2 py-1" (click)="openmodel(i)">
+            <i class="bi bi-eye btn-sm"></i>
           </button>
-          <button class="btn btn-outline-danger" (click)="deleteEntry(form.formId, i)">
+          <button class="btn btn-outline-danger px-1 py-1" (click)="deleteEntry(form.formId, i)">
             <i class="bi bi-trash"></i>
           </button>
+         </div>
         </td>
       </tr>
     </tbody>
