@@ -6,12 +6,12 @@
     <h2>Form Name: {{ formTitle }}</h2>
     <button *ngIf="mappedFields.length > 0" class="btn btn-success btn-md mb-1 px-2 py-2" (click)="exportToExcel()">Export to Excel</button>
   </div>
-  
+
   <table class="table table-striped table-hover table-bordered table-responsive-md mt-2">
     <thead>
       <tr>
         <ng-container *ngIf="mappedFields.length > 0">
-          <th>Sr. No.</th>
+          <th>Patient Id</th>
           <th *ngFor="let key of mappedFields[0]?.keyValuePairs | objectKeys">
             {{ key }}
           </th>
@@ -21,7 +21,7 @@
     </thead>
     <tbody>
       <tr *ngFor="let form of mappedFields; let i = index">
-        <td>{{ i + 1 }}</td>
+        <td>{{ form.patientId }}</td>
         <td *ngFor="let key of form.keyValuePairs | objectKeys">
           {{ form.keyValuePairs[key] }}
         </td>
@@ -85,4 +85,4 @@
       </div>
     </div>
   </div>
-</div>  
+</div>

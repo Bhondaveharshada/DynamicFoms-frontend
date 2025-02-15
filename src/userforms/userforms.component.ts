@@ -20,47 +20,52 @@ const EXCEL_EXTENSION = '.xlsx';
 export class UserformsComponent implements OnInit {
 
   formTitle:any
-  mappedFields: any[] = []; 
+  mappedFields: any[] = [];
   selectedFormDetails: any = {};
-  
+
   constructor(private router:Router ,private formservice:FormService, private activatedroute:ActivatedRoute, private objectkeys: ObjectKeysPipe){}
 
 
-  
+
   ngOnInit(): void {
     const id = this.activatedroute.snapshot.paramMap.get('id');
     console.log(id);
     this.formservice.fetchUserForms(id).subscribe({
       next: (res: any) => {
+        console.log("RESPONSE : ", res);
+
         const targetId = res.result;
         const fields = res.Fields; // Form details
         this.formTitle = fields.title; // Extract form title
         console.log('Form Title:', this.formTitle);
-    
+
         const mappedFields: any[] = []; // Array to hold the mapped data
-    
+
         // Loop through all form entries in the result
         for (let item of res.result) {
           const keyValuePairs: Record<string, any> = {}; // Object to hold key-value pairs for this form
-    
+          let patientId;
           // Map additionalFields values
           fields.additionalFields.forEach((field: any) => {
             const matchingField = item.additionalFields.find(
               (af: any) => af.label === field.label
             ); // Find matching field by label
-            
+
+
+            patientId = item.patientId;
             const key = field.label; // Use label as key
             const value = matchingField?.value || 'N/A'; // Use value if found, otherwise fallback to 'N/A'
             keyValuePairs[key] = value; // Map the key to its value
           });
-    
+
           // Add this form's data to the array
           mappedFields.push({
             formId: item._id,
+            patientId: patientId,
             keyValuePairs: keyValuePairs,
           });
         }
-    
+
         this.mappedFields = mappedFields; // Store the mapped data in a variable for display
         console.log('Mapped Fields:', this.mappedFields);
       },
@@ -68,10 +73,10 @@ export class UserformsComponent implements OnInit {
         console.log(err);
       },
     });
-          
+
   }
 
-       
+
   openmodel(index:any){
     this.selectedFormDetails = this.mappedFields[index];
     const modalElement = document.getElementById('viewDetailsModal');
@@ -84,7 +89,7 @@ export class UserformsComponent implements OnInit {
   deleteEntry(Id: any, index: number): void {
     // Show a confirmation alert before deleting
     console.log(Id,"form._id");
-    
+
     Swal.fire({
       title: 'Are you sure?',
       text: 'You will not be able to recover this entry!',
@@ -92,7 +97,7 @@ export class UserformsComponent implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it!',
       cancelButtonText: 'Cancel',
- 
+
     }).then((result) => {
       if (result.isConfirmed) {
         this.formservice.deleteOneUserForm(Id).subscribe({
