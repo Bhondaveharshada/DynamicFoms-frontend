@@ -96,7 +96,15 @@ export class TimepointsComponent implements OnInit {
           const interval = timepoint.interval || 0; // Default interval is 0 days
           const date = new Date(this.onboardDate!);
           date.setDate(this.onboardDate!.getDate() + interval); // Calculate date based on interval
-          row[timepoint.name] = date.toLocaleDateString(); // Add date to the row
+
+          // Format date to "dd-MMM-yyyy" (e.g., "15-Feb-2025")
+          const formattedDate = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }).replace(/ /g, '-'); // Replace spaces with hyphens
+
+          row[timepoint.name] = formattedDate; // Add formatted date to the row
         } else {
           // If no relation, leave the cell empty or use '-'
           row[timepoint.name] = '-';
@@ -109,5 +117,4 @@ export class TimepointsComponent implements OnInit {
     console.log('Headers:', this.headers);
     console.log('Table Data:', this.tableData);
   }
-
 }
