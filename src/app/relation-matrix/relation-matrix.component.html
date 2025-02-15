@@ -1,0 +1,26 @@
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Relation Matrix</h2>
+  <form [formGroup]="relationsForm">
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Form</th>
+            <th *ngFor="let timepoint of timepoints">{{ timepoint.name }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let form of forms; let i = index">
+            <td>{{ form.title }}</td>
+            <td *ngFor="let timepoint of timepoints; let j = index">
+              <input type="checkbox" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="text-center mt-4">
+      <button type="submit" class="btn btn-primary">Save Relations</button>
+    </div>
+  </form>
+</div>

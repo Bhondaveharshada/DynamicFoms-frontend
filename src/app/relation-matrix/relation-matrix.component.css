@@ -1,0 +1,11 @@
+table {
+  text-align: center;
+}
+th,
+td {
+  padding: 10px;
+}
+.container {
+  max-width: 800px;
+  margin: auto;
+}

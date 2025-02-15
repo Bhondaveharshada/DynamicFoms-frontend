@@ -4,8 +4,14 @@
       <button routerLink="/dragdrop" class="btn btn-outline-primary">
        Create New Form
       </button>
-    </div>    
-     
+      <button routerLink="/patient" class="btn btn-outline-primary">
+        Patients
+       </button>
+       <button routerLink="/timepoint" class="btn btn-outline-primary">
+        Time Point
+       </button>
+    </div>
+
     <!-- Forms List -->
 <div class="container mt-5">
   <div class="row row1-container gy-4">
@@ -45,9 +51,9 @@
   </div>
 </div>
 
-    
-                   
-      
+
+
+
       <!-- Bootstrap Modal -->
       <div
         class="modal fade"
@@ -72,20 +78,20 @@
             <div class="modal-body">
               <ul>
                 <li *ngFor="let field of selectedForm?.additionalFields">
-                  {{ field.label }} 
+                  {{ field.label }}
                     @if(field.isrequired){
                       <strong>*</strong>
                     }@if(field.options && field.options.length > 0){
                     options[{{field.options}}]
                     }
-                 
-                  
+
+
                 </li>
               </ul>
             </div>
             <div class="modal-footer">
-              <button 
-              
+              <button
+
                 class="btn btn-outline-primary btn-sm"
                 (click)="ViewUserForms(selectedForm?._id)"
                 data-bs-dismiss="modal"
@@ -113,13 +119,13 @@
     </div>
   </div>
 
-    
-                
-            
-    
-    
 
-  
+
+
+
+
+
+
 
 
 
