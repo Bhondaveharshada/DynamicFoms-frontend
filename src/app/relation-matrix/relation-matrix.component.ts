@@ -83,4 +83,10 @@ initializeForm() {
 }
 
 
+onSubmit(){
+  alert("HELlo")
+  console.log(this.relationsForm.value);
+  console.log(JSON.stringify(this.relationsForm.value));
+}
+
 }
