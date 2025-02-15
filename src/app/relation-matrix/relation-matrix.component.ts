@@ -61,32 +61,78 @@ export class RelationMatrixComponent implements OnInit {
     );
   }
 
-initializeForm() {
-  if (this.forms.length && this.timepoints.length) {
-    const relationsArray = this.relationsForm.get('relations') as FormArray;
+  initializeForm() {
+    if (this.forms.length && this.timepoints.length) {
+      const relationsArray = this.relationsForm.get('relations') as FormArray;
 
-    this.forms.forEach((form: any) => {
-      // Create FormArray for each form's timepoints
-      const timepointControls = this.timepoints.map(() => this.fb.control(false));
+      this.forms.forEach((form: any) => {
+        // Create FormGroup for each form
+        const formGroup = this.fb.group({
+          formId: form._id, // ID of the form
+          timepoints: this.fb.array([]), // Empty array to store selected timepoint IDs
+        });
 
-      // Create FormGroup for each form
-      const formGroup = this.fb.group({
-        formId: form._id,
-        timepoints: this.fb.array(timepointControls), // FormArray of checkboxes
+        relationsArray.push(formGroup);
       });
 
-      relationsArray.push(formGroup);
-    });
-
-    console.log("Relation form initialized:", this.relationsForm.value);
+      console.log("Relation form initialized:", this.relationsForm.value);
+    }
   }
-}
+
+  onCheckboxChange(formIndex: number, timepointId: string, event: Event): void {
+    // Cast event.target to HTMLInputElement to access the `checked` property
+    const isChecked = (event.target as HTMLInputElement).checked;
+
+    const relationsArray = this.relationsForm.get('relations') as FormArray;
+    const formGroup = relationsArray.at(formIndex) as FormGroup;
+    const timepointsArray = formGroup.get('timepoints') as FormArray;
+
+    if (isChecked) {
+      // Add the timepoint ID if it doesn't exist in the array
+      if (!timepointsArray.value.includes(timepointId)) {
+        timepointsArray.push(this.fb.control(timepointId));
+      }
+    } else {
+      // Remove the timepoint ID if unchecked
+      const index = timepointsArray.value.indexOf(timepointId);
+      if (index !== -1) {
+        timepointsArray.removeAt(index);
+      }
+    }
+
+    console.log(`Updated timepoints for form ${formIndex}:`, timepointsArray.value);
+  }
 
 
-onSubmit(){
-  alert("HELlo")
-  console.log(this.relationsForm.value);
-  console.log(JSON.stringify(this.relationsForm.value));
-}
+
+  isChecked(formIndex: number, timepointId: string): boolean {
+    const relationsArray = this.relationsForm.get('relations') as FormArray;
+    const formGroup = relationsArray.at(formIndex) as FormGroup;
+    const timepointsArray = formGroup.get('timepoints') as FormArray;
+
+    // Return true if the timepointId exists in the array, false otherwise
+    return timepointsArray?.value?.includes(timepointId) || false;
+  }
+
+
+  onSubmit() {
+    const processedRelations = this.relationsForm.value.relations.map((relation: any) => ({
+      formId: relation.formId,
+      timepoints: relation.timepoints, // Already contains only selected IDs
+    }));
+    alert("data")
+    console.log('Processed Relations:', processedRelations);
+    this.relationService.saveRelations(processedRelations).subscribe(
+      (response) => {
+        console.log('Relations saved successfully:', response);
+        alert('Relations saved successfully!');
+      },
+      (error) => {
+        console.error('Error saving relations:', error);
+        alert('Failed to save relations. Please try again.');
+      }
+    );
+  }
+
 
 }

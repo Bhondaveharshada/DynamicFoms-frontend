@@ -13,7 +13,11 @@
           <tr *ngFor="let form of forms; let i = index">
             <td>{{ form.title }}</td>
             <td *ngFor="let timepoint of timepoints; let j = index">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                (change)="onCheckboxChange(i, timepoint._id, $event)"
+                [checked]="isChecked(i, timepoint._id)"
+              />
             </td>
           </tr>
         </tbody>

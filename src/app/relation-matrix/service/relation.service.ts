@@ -7,7 +7,19 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root',
 })
 export class RelationService {
-  private apiUrl = `${environment.api}`;
+  private apiUrl = `${environment.api}/relation`;
   constructor(private http: HttpClient) { }
+
+  saveRelations(relations: { formId: string; timepoints: string[] }[]): Observable<any> {
+    return this.http.post(this.apiUrl, { relations });
+  }
+
+  getAllRelations(): Observable<any> {
+    return this.http.get(this.apiUrl);
+  }
+
+  getRelationByFormId(formId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${formId}`);
+  }
 
 }
