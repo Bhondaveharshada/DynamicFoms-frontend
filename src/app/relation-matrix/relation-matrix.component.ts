@@ -4,7 +4,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule } from '@angular/forms';
 import { FormService } from '../../services/form.service';
 import { TimepointService } from '../timepoint/Service/timepoint.service';
-
+import Swal from 'sweetalert2'; // Import SweetAlert
 @Component({
   selector: 'app-relation-matrix',
   imports: [ReactiveFormsModule, CommonModule],
@@ -143,6 +143,12 @@ export class RelationMatrixComponent implements OnInit {
 
     this.relationService.saveRelations(processedRelations).subscribe(
       (response) => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'Relations saved successfully!',
+          confirmButtonText: 'OK',
+        });
         console.log('Relations saved successfully:', response);
       },
       (error) => {
