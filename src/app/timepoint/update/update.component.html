@@ -1,0 +1,57 @@
+<section class="container mt-5">
+  <div class="text-center mb-4">
+    <h1 class="display-4 text-dark">Update Timepoint</h1>
+  </div>
+
+  <div class="card shadow-sm p-4">
+    <form [formGroup]="timepointForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          class="form-control"
+          formControlName="name"
+          placeholder="Enter timepoint name"
+        />
+        <small
+          *ngIf="timepointForm.controls['name'].invalid && timepointForm.controls['name'].touched"
+          class="text-danger"
+        >
+          Name is required.
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="interval">Interval (in days)</label>
+        <input
+          type="number"
+          id="interval"
+          class="form-control"
+          formControlName="interval"
+          placeholder="Enter interval in days"
+        />
+        <small
+          *ngIf="timepointForm.controls['interval'].invalid && timepointForm.controls['interval'].touched"
+          class="text-danger"
+        >
+          Interval is required and must be a positive number.
+        </small>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-secondary btn-lg" (click)="navigateBack()">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary btn-lg"
+          [disabled]="timepointForm.invalid"
+        >
+          <i class="bi bi-save"></i> Update
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

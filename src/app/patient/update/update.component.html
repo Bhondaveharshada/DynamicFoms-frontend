@@ -1,0 +1,110 @@
+<section class="update-patient">
+  <div class="text-center mt-4">
+    <h2>Update Patient Details</h2>
+  </div>
+
+  <!-- Card Container for the Form with Centering and Reduced Width -->
+  <div class="container mt-4">
+    <div class="card shadow-sm p-4" style="max-width: 600px; margin: 0 auto;">
+      <form (ngSubmit)="onSubmit()" #patientForm="ngForm">
+
+        <!-- ID Field (Read-Only) -->
+        <div class="form-group">
+          <label for="id">Patient ID</label>
+          <input
+            type="text"
+            id="id"
+            class="form-control"
+            [value]="patient.id"
+            readonly
+          />
+        </div>
+
+        <!-- Name Field -->
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input
+            type="text"
+            id="name"
+            class="form-control"
+            required
+            [(ngModel)]="patient.name"
+            name="name"
+            #name="ngModel"
+          />
+          <div *ngIf="name.invalid && name.touched" class="text-danger">
+            Name is required.
+          </div>
+        </div>
+
+        <!-- Email Field -->
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            class="form-control"
+            required
+            [(ngModel)]="patient.email"
+            name="email"
+            #email="ngModel"
+          />
+          <div *ngIf="email.invalid && email.touched" class="text-danger">
+            A valid email is required.
+          </div>
+        </div>
+
+        <!-- Phone Field -->
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input
+            type="tel"
+            id="phone"
+            class="form-control"
+            required
+            [(ngModel)]="patient.phone"
+            name="phone"
+            #phone="ngModel"
+          />
+          <div *ngIf="phone.invalid && phone.touched" class="text-danger">
+            Phone number is required.
+          </div>
+        </div>
+
+        <!-- Birthdate Field -->
+        <div class="form-group">
+          <label for="birthdate">Birthdate</label>
+          <input
+            type="date"
+            id="birthdate"
+            class="form-control"
+            required
+            [(ngModel)]="patient.birthdate"
+            name="birthdate"
+            #birthdate="ngModel"
+          />
+          <div *ngIf="birthdate.invalid && birthdate.touched" class="text-danger">
+            Birthdate is required.
+          </div>
+        </div>
+
+        <!-- Buttons Section -->
+        <div class="d-flex justify-content-between mt-4">
+          <!-- Back Button -->
+          <button type="button" class="btn btn-outline-secondary" (click)="navigateBack()">
+            Back
+          </button>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="patientForm.invalid"
+          >
+            Update Patient
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

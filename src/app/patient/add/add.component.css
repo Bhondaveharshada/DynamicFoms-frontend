@@ -1,0 +1,41 @@
+/* add.component.css */
+
+.add-patient {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.card {
+  background-color: #f8f9fa; /* Light grey background */
+  border: 1px solid #dee2e6; /* Light border */
+  border-radius: 10px; /* Rounded corners */
+}
+
+.card .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.card label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.card input {
+  border-radius: 5px; /* Rounded inputs */
+}
+
+.card .btn-primary {
+  padding: 10px 20px;
+  font-size: 1.1rem;
+}
+
+.card .text-danger {
+  font-size: 0.9rem;
+}
+
+/* Button Disabled State */
+.card button:disabled {
+  background-color: #d6d8db;
+  border-color: #d6d8db;
+}

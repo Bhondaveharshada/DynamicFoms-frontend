@@ -1,0 +1,90 @@
+<section class="add-patient">
+  <div class="text-center mt-4">
+    <h2>Add New Patient</h2>
+  </div>
+
+  <!-- Card Container for the Form -->
+  <div class="card shadow-sm p-4 mt-4">
+    <form (ngSubmit)="onSubmit()" #patientForm="ngForm">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          class="form-control"
+          required
+          [(ngModel)]="patient.name"
+          name="name"
+          #name="ngModel"
+        />
+        <div *ngIf="name.invalid && name.touched" class="text-danger">
+          Name is required.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          class="form-control"
+          required
+          [(ngModel)]="patient.email"
+          name="email"
+          #email="ngModel"
+        />
+        <div *ngIf="email.invalid && email.touched" class="text-danger">
+          A valid email is required.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone</label>
+        <input
+          type="tel"
+          id="phone"
+          class="form-control"
+          required
+          [(ngModel)]="patient.phone"
+          name="phone"
+          #phone="ngModel"
+        />
+        <div *ngIf="phone.invalid && phone.touched" class="text-danger">
+          Phone number is required.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="birthdate">Birthdate</label>
+        <input
+          type="date"
+          id="birthdate"
+          class="form-control"
+          required
+          [(ngModel)]="patient.birthdate"
+          name="birthdate"
+          #birthdate="ngModel"
+        />
+        <div *ngIf="birthdate.invalid && birthdate.touched" class="text-danger">
+          Birthdate is required.
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <!-- Back Button -->
+        <button type="button" class="btn btn-outline-secondary" (click)="navigateBack()">
+          Back
+        </button>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="patientForm.invalid"
+        >
+          Add Patient
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
