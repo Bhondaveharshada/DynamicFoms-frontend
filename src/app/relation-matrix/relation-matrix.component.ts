@@ -15,8 +15,14 @@ export class RelationMatrixComponent implements OnInit {
   relationsForm: FormGroup;
   forms: any = []; // Forms fetched from backend
   timepoints: any = []; // Timepoints fetched from backend
+  existingRelations: any = []; // Existing relations fetched from backend
 
-  constructor(private fb: FormBuilder, private relationService: RelationService, private formService: FormService, private timepointService: TimepointService) {
+  constructor(
+    private fb: FormBuilder,
+    private relationService: RelationService,
+    private formService: FormService,
+    private timepointService: TimepointService
+  ) {
     this.relationsForm = this.fb.group({
       relations: this.fb.array([]),
     });
@@ -25,21 +31,20 @@ export class RelationMatrixComponent implements OnInit {
   ngOnInit(): void {
     this.fetchForms();
     this.fetchTimepoints();
+    this.initializeForm(); // Initialize the form after fetching forms
+    this.fetchRelations();
+
   }
 
   // Fetch forms from backend
   fetchForms() {
-    console.log("FETCHING");
-
     this.formService.getAllFormFields().subscribe(
       (response: any) => {
         this.forms = response.result;
-        console.log(this.forms);
-        console.log("forms fetched successfully");
+        console.log('Forms fetched successfully:', this.forms);
       },
       (error) => {
-        alert("Error fetching forms");
-        console.log(error);
+        console.error(error);
       }
     );
   }
@@ -49,38 +54,51 @@ export class RelationMatrixComponent implements OnInit {
     this.timepointService.getTimepoints().subscribe(
       (data: any) => {
         this.timepoints = data;
-        console.log("timepoints fetched");
-        console.log(data);
-        this.initializeForm();
+        console.log('Timepoints fetched successfully:', this.timepoints);
       },
       (error) => {
-        alert("error fetching timepoints")
-        console.log("error fetching timepoints", error);
+        console.error(error);
       }
+    );
+  }
 
+  // Fetch existing relations from backend
+  fetchRelations() {
+    this.relationService.getAllRelations().subscribe(
+      (response: any) => {
+        this.existingRelations = response.data || [];
+        console.log('Existing relations fetched successfully:', this.existingRelations);
+        this.initializeForm(); // Initialize the form after fetching relations
+      },
+      (error) => {
+        console.error(error);
+      }
     );
   }
 
   initializeForm() {
     if (this.forms.length && this.timepoints.length) {
       const relationsArray = this.relationsForm.get('relations') as FormArray;
+      relationsArray.clear(); // Clear any existing form controls
 
       this.forms.forEach((form: any) => {
-        // Create FormGroup for each form
+        // Check if a relation exists for the current form
+        const existingRelation = this.existingRelations.find((rel: any) => rel.formId === form._id);
+
+        // Create FormGroup for the form
         const formGroup = this.fb.group({
           formId: form._id, // ID of the form
-          timepoints: this.fb.array([]), // Empty array to store selected timepoint IDs
+          timepoints: this.fb.array(existingRelation ? existingRelation.timepoints : []), // Pre-populate with existing timepoints or initialize empty
         });
 
         relationsArray.push(formGroup);
       });
 
-      console.log("Relation form initialized:", this.relationsForm.value);
+      console.log('Relation form initialized:', this.relationsForm.value);
     }
   }
 
   onCheckboxChange(formIndex: number, timepointId: string, event: Event): void {
-    // Cast event.target to HTMLInputElement to access the `checked` property
     const isChecked = (event.target as HTMLInputElement).checked;
 
     const relationsArray = this.relationsForm.get('relations') as FormArray;
@@ -103,14 +121,15 @@ export class RelationMatrixComponent implements OnInit {
     console.log(`Updated timepoints for form ${formIndex}:`, timepointsArray.value);
   }
 
-
-
   isChecked(formIndex: number, timepointId: string): boolean {
     const relationsArray = this.relationsForm.get('relations') as FormArray;
+    if (!relationsArray || !relationsArray.at(formIndex)) {
+      return false; // Return false if relationsArray or formGroup is undefined
+    }
+
     const formGroup = relationsArray.at(formIndex) as FormGroup;
     const timepointsArray = formGroup.get('timepoints') as FormArray;
 
-    // Return true if the timepointId exists in the array, false otherwise
     return timepointsArray?.value?.includes(timepointId) || false;
   }
 
@@ -120,19 +139,15 @@ export class RelationMatrixComponent implements OnInit {
       formId: relation.formId,
       timepoints: relation.timepoints, // Already contains only selected IDs
     }));
-    alert("data")
     console.log('Processed Relations:', processedRelations);
+
     this.relationService.saveRelations(processedRelations).subscribe(
       (response) => {
         console.log('Relations saved successfully:', response);
-        alert('Relations saved successfully!');
       },
       (error) => {
         console.error('Error saving relations:', error);
-        alert('Failed to save relations. Please try again.');
       }
     );
   }
-
-
 }
