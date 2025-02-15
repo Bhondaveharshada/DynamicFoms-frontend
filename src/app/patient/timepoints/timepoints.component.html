@@ -1,0 +1,23 @@
+<section class="container mt-5">
+  <div class="text-center mb-4">
+    <h1 class="display-4">Timepoint Matrix</h1>
+  </div>
+
+  <div class="card shadow-sm p-4">
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th *ngFor="let header of headers">{{ header }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of tableData">
+            <td>{{ row.formName }}</td>
+            <td *ngFor="let timepoint of timepoints">{{ row[timepoint.name] || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

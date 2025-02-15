@@ -14,6 +14,7 @@ import { ListTimepointComponent } from './timepoint/list/list.component';
 import { AddTimepointComponent } from './timepoint/add/add.component';
 import { UpdateTimepointComponent } from './timepoint/update/update.component';
 import { RelationMatrixComponent } from './relation-matrix/relation-matrix.component';
+import { TimepointsComponent } from './patient/timepoints/timepoints.component';
 
 export const routes: Routes = [{
     path:"register", component:FormComponent
@@ -48,6 +49,9 @@ export const routes: Routes = [{
     },
     {
       path:'update/:id', component: UpdateComponent
+    },
+    {
+      path: 'datematrix', component: TimepointsComponent
     }
   ]
 },
