@@ -87,7 +87,10 @@ export class TimepointsComponent implements OnInit {
       console.log(`Form: ${form.title}, Related Timepoint IDs: `, relatedTimepointIds);
 
       // Build the row: Start with form name
-      const row: any = { formName: form.title };
+      const row: any = {
+        formName: form.title,
+        formLink: form.formLink, // Add the formLink for clickable URLs
+      };
 
       // Add timepoint dates to the row
       this.timepoints.forEach((timepoint) => {
@@ -117,4 +120,9 @@ export class TimepointsComponent implements OnInit {
     console.log('Headers:', this.headers);
     console.log('Table Data:', this.tableData);
   }
+  generateFormLink(formLink: string, timepoint: any): string {
+    // Include the patientId and timepoint details in the URL
+    return `${formLink}?patientId=${this.patientId}&timepointId=${timepoint._id}&timepointName=${timepoint.name}`;
+  }
+
 }

@@ -14,7 +14,21 @@
         <tbody>
           <tr *ngFor="let row of tableData">
             <td>{{ row.formName }}</td>
-            <td *ngFor="let timepoint of timepoints">{{ row[timepoint.name] || '-' }}</td>
+            <td *ngFor="let timepoint of timepoints">
+              <ng-container *ngIf="row[timepoint.name] && row.formLink">
+                <!-- If a date and formLink exist, make it clickable -->
+                <a
+                  [href]="generateFormLink(row.formLink, timepoint)"
+                  class="text-primary text-decoration-none"
+                >
+                  {{ row[timepoint.name] }}
+                </a>
+              </ng-container>
+              <ng-container *ngIf="!row[timepoint.name] || !row.formLink">
+                <!-- If no date or formLink, show '-' -->
+                {{ row[timepoint.name] || '-' }}
+              </ng-container>
+            </td>
           </tr>
         </tbody>
       </table>
