@@ -89,7 +89,8 @@ export class TimepointsComponent implements OnInit {
       // Build the row: Start with form name
       const row: any = {
         formName: form.title,
-        formLink: form.formLink, // Add the formLink for clickable URLs
+        formLink: form.formLink,
+        formId: form._id
       };
 
       // Add timepoint dates to the row
@@ -113,6 +114,7 @@ export class TimepointsComponent implements OnInit {
           row[timepoint.name] = '-';
         }
       });
+      console.log("row : ", row);
 
       return row;
     });
@@ -120,9 +122,9 @@ export class TimepointsComponent implements OnInit {
     console.log('Headers:', this.headers);
     console.log('Table Data:', this.tableData);
   }
-  generateFormLink(formLink: string, timepoint: any): string {
-    // Include the patientId and timepoint details in the URL
-    return `${formLink}?patientId=${this.patientId}&timepointId=${timepoint._id}&timepointName=${timepoint.name}`;
+  generateFormLink(formLink: string, formId: any, timepoint: any): string {
+    // Include the patientId, formId, and timepoint details in the URL
+    return `${formLink}?patientId=${this.patientId}&formId=${formId}&timepointId=${timepoint._id}&timepointName=${timepoint.name}`;
   }
 
 }

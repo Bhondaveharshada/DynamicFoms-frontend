@@ -18,7 +18,7 @@
               <ng-container *ngIf="row[timepoint.name] && row.formLink">
                 <!-- If a date and formLink exist, make it clickable -->
                 <a
-                  [href]="generateFormLink(row.formLink, timepoint)"
+                  [href]="generateFormLink(row.formLink, row.formId , timepoint)"
                   class="text-primary text-decoration-none"
                 >
                   {{ row[timepoint.name] }}

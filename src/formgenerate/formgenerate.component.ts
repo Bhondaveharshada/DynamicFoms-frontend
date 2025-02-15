@@ -23,22 +23,29 @@ interface Field {
 })
 export class FormgenerateComponent {
   previewForm: FormGroup | null = null;
-  
-  
+
+
   // Replace with the ObjectId you want to fetch
-  
+
   userFormData :any ;
   formData: any = null; // Static title and question
   fields:  Field[] = [];
   formfieldId:any;
   isPreviewMode = false;
+  patientId: string | null = null;
+  timepointId: string | null = null;
+  formId: string | null = null;
 
-  
+
   constructor(private fb: FormBuilder,private route: ActivatedRoute, private formService:FormService, ) {
-  
+
   }
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe((params) => {
+      this.patientId = params['patientId'];
+      this.timepointId = params['timepointId'];
+    });
     const formId = this.route.snapshot.paramMap.get('formId');
     const id = this.route.snapshot.paramMap.get('id');
     this.formfieldId = id
@@ -46,7 +53,7 @@ export class FormgenerateComponent {
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
       fields.forEach((field, index) => {
         const fieldControl = (this.previewForm?.get('additionalFields') as FormArray).at(index) as FormGroup;
-  
+
         if (field.isrequired===true) {
           fieldControl.get('value')?.setValidators(this.getValidators(field.inputType));
         } else {
@@ -55,26 +62,26 @@ export class FormgenerateComponent {
         fieldControl.get('value')?.updateValueAndValidity(); // Recalculate validations
       });
     });
-   
-     
-  
+
+
+
   }
 
   fetchFormFields(id: any): void {
     this.formService.getFormFields(id).subscribe({
       next: (response: any) => {
         this.formData = response.result;
-  
+
         // Use the unified 'options' field for both checkbox and radio inputs
         this.fields = response.result.additionalFields.map((field: any) => field);
-  
+
         console.log("Fields from backend:", this.fields);
         this.previewForm = this.fb.group({
           title: [this.formData.title, Validators.required],
           additionalFields: this.fb.array(
             this.formData.additionalFields.map((field: any) =>
               this.fb.group({
-                label: [field.label, Validators.required], 
+                label: [field.label, Validators.required],
                 value: field.inputType === 'checkbox' ? [[]] : ['', this.getDynamicValidators(field)],
                 inputType: [field.inputType, Validators.required],
                 isrequired: [field.isrequired],
@@ -111,7 +118,7 @@ export class FormgenerateComponent {
 }
 
 
-  
+
   getValidators(inputType: string) {
     switch (inputType) {
       case 'email':
@@ -144,7 +151,14 @@ export class FormgenerateComponent {
 
   onSubmit() {
     if (this.previewForm?.valid) {
-      this.formService.addform(this.previewForm.value, this.formfieldId).subscribe({
+      const formData = {
+        ...this.previewForm.value,
+        patientId: this.patientId,
+        timepointId: this.timepointId,
+        formId: this.route.snapshot.queryParams['formId']
+      };
+
+      this.formService.addform(formData, this.formfieldId).subscribe({
         next:(res:any)=>{
           const fields = this.fields;
           const userform = res.result.additionalFields
@@ -168,11 +182,11 @@ export class FormgenerateComponent {
           const id = res.result._id
           console.log("Id",id);
           console.log("additionalfields from db", userform);
-          this.userFormData = this.processSubmittedData(fields, userform); 
+          this.userFormData = this.processSubmittedData(fields, userform);
 
         },error :(err:any)=>{
           console.log("errrorrr");
-        }  
+        }
         }) ;
       console.log("Submitted Form Data:", this.previewForm.value);
     } else {
@@ -180,14 +194,14 @@ export class FormgenerateComponent {
       console.log("Form is invalid");
     }
   }
-   
-        
-         
-         
+
+
+
+
   onBack() {
     this.isPreviewMode = false; // Show the form when back is clicked
   }
-          
+
 
 
   processSubmittedData(fields: any[], additionalFields: any[]): any[] {
