@@ -1,8 +1,11 @@
 <div class="d-flex justify-content-center mt-4">
-  
+
   <div *ngIf="!isPreviewMode" class=" p-5 shadow w-50">
     <!-- Form Title -->
-    <h1 class="text-center card-title">{{ formData?.title }}</h1>
+    <button class="btn btn-outline-primary mb-4" (click)="navigateBack()">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <h1 class="text-center card-title">{{ formData?.title || title }}</h1>
 
     <form *ngIf="previewForm" [formGroup]="previewForm" class="row g-4">
       <!-- Form Fields -->
@@ -17,7 +20,7 @@
             {{ fields[fieldIndex]['label'] }}
             <span *ngIf="fields[fieldIndex]?.isrequired" class="text-danger">*</span>
           </label>
-          
+
 
           <!-- Input Types -->
           <ng-container [ngSwitch]="fields[fieldIndex]['inputType']">
@@ -40,7 +43,7 @@
               type="value"
               class="form-control"
               formControlName="value"
-             
+
             ></textarea>
 
             <input
@@ -58,7 +61,7 @@
               formControlName="value"
               placeholder="Enter password"
             />
-            
+
             <input
               *ngSwitchCase="'date'"
               type="date"
@@ -111,7 +114,7 @@
               </div>
             </div>
           </ng-container>
-          
+
 
           <!-- Error Messages -->
           <div
@@ -145,7 +148,7 @@
       </div>
 
       <!-- Submit Button -->
-      <div class="d-flex justify-content-center col-12">
+      <div *ngIf="!prePopulatedFlag" class="d-flex justify-content-center col-12">
         <button
           type="button"
           class="btn btn-primary px-5"
@@ -154,11 +157,29 @@
           Submit
         </button>
       </div>
+      <div *ngIf="prePopulatedFlag && !editModeFlag" class="d-flex justify-content-center col-12">
+        <button
+          type="button"
+          class="btn btn-primary px-5"
+          (click)="toggleEditMode()"
+        >
+          Edit
+        </button>
+      </div>
+      <div *ngIf="editModeFlag" class="d-flex justify-content-center col-12">
+        <button
+          type="button"
+          class="btn btn-primary px-5"
+          (click)="updateFormResponse()"
+        >
+          Update
+        </button>
+      </div>
     </form>
   </div>
 
 
-  
+
 </div>
 
 <div *ngIf="isPreviewMode" class="d-flex justify-content-center mt-4">

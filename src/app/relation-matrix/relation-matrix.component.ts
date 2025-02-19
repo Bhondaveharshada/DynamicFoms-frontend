@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule } from '@angular
 import { FormService } from '../../services/form.service';
 import { TimepointService } from '../timepoint/Service/timepoint.service';
 import Swal from 'sweetalert2'; // Import SweetAlert
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-relation-matrix',
   imports: [ReactiveFormsModule, CommonModule],
@@ -21,7 +22,8 @@ export class RelationMatrixComponent implements OnInit {
     private fb: FormBuilder,
     private relationService: RelationService,
     private formService: FormService,
-    private timepointService: TimepointService
+    private timepointService: TimepointService,
+    private router: Router
   ) {
     this.relationsForm = this.fb.group({
       relations: this.fb.array([]),
@@ -155,5 +157,9 @@ export class RelationMatrixComponent implements OnInit {
         console.error('Error saving relations:', error);
       }
     );
+  }
+
+  back(){
+    this.router.navigate([`/`]);
   }
 }

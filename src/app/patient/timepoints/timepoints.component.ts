@@ -1,8 +1,9 @@
+import { response } from 'express';
 import { TimepointService } from './../../timepoint/Service/timepoint.service';
 import { FormService } from './../../../services/form.service';
 import { RelationService } from './../../relation-matrix/service/relation.service';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PatientService } from '../service/patient-service.service';
 import { CommonModule } from '@angular/common';
 
@@ -20,20 +21,33 @@ export class TimepointsComponent implements OnInit {
   timepoints: any[] = [];
   tableData: any[] = [];
   headers: string[] = ['Form Name'];
+  filledResponses: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private relationService: RelationService,
     private formService: FormService,
     private timepointService: TimepointService,
-    private patientService: PatientService
+    private patientService: PatientService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
     // Fetch patientId from query params
     this.route.queryParams.subscribe((params) => {
       this.patientId = params['id'];
+      this.getSubmittedResponses();
       this.fetchData();
+    });
+  }
+
+  getSubmittedResponses(){
+    this.formService.getAllResponses(this.patientId).subscribe({
+      next :(response : any) => {
+        this.filledResponses = response.data;
+        console.log("Submitted responses : ", response.data);
+      },
+
     });
   }
 
@@ -108,7 +122,14 @@ export class TimepointsComponent implements OnInit {
             year: 'numeric',
           }).replace(/ /g, '-'); // Replace spaces with hyphens
 
-          row[timepoint.name] = formattedDate; // Add formatted date to the row
+          // Check if the form is already filled for this timepoint
+          const isFilled = this.filledResponses.some(
+            (response) =>
+              response.formId === form._id && response.timepointId === timepoint._id
+          );
+
+          // Add formatted date and tick mark if filled
+          row[timepoint.name] = isFilled ? `${formattedDate} ✔` : formattedDate;
         } else {
           // If no relation, leave the cell empty or use '-'
           row[timepoint.name] = '-';
@@ -122,9 +143,14 @@ export class TimepointsComponent implements OnInit {
     console.log('Headers:', this.headers);
     console.log('Table Data:', this.tableData);
   }
+
   generateFormLink(formLink: string, formId: any, timepoint: any): string {
     // Include the patientId, formId, and timepoint details in the URL
     return `${formLink}?patientId=${this.patientId}&formId=${formId}&timepointId=${timepoint._id}&timepointName=${timepoint.name}`;
+  }
+
+  back(){
+    this.router.navigate([`/patient`]);
   }
 
 }

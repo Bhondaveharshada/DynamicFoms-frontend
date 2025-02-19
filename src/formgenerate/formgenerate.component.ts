@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, Validators, FormGroup, FormBuilder, FormArray } from '@angular/forms';
-import { CommonModule, JsonPipe } from '@angular/common';
+import { CommonModule, JsonPipe, Location } from '@angular/common';
 import { FormService } from '../services/form.service';
 import Swal from 'sweetalert2';
-
 
 interface Field {
   options?: string[]; // Unified for both checkboxes and radio buttons
@@ -14,10 +13,9 @@ interface Field {
   _id: string;
 }
 
-
 @Component({
   selector: 'app-formgenerate',
-  imports: [RouterModule,ReactiveFormsModule,CommonModule],
+  imports: [RouterModule, ReactiveFormsModule, CommonModule],
   templateUrl: './formgenerate.component.html',
   styleUrl: './formgenerate.component.css'
 })
@@ -27,17 +25,19 @@ export class FormgenerateComponent {
 
   // Replace with the ObjectId you want to fetch
 
-  userFormData :any ;
+  userFormData: any;
   formData: any = null; // Static title and question
-  fields:  Field[] = [];
-  formfieldId:any;
+  fields: Field[] = [];
+  formfieldId: any;
   isPreviewMode = false;
   patientId: string | null = null;
   timepointId: string | null = null;
   formId: string | null = null;
+  title = "";
+  prePopulatedFlag = false;
+  editModeFlag = false;
 
-
-  constructor(private fb: FormBuilder,private route: ActivatedRoute, private formService:FormService, ) {
+  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router) {
 
   }
 
@@ -45,16 +45,28 @@ export class FormgenerateComponent {
     this.route.queryParams.subscribe((params) => {
       this.patientId = params['patientId'];
       this.timepointId = params['timepointId'];
+      this.formId = params['formId'];
     });
-    const formId = this.route.snapshot.paramMap.get('formId');
+
     const id = this.route.snapshot.paramMap.get('id');
-    this.formfieldId = id
-    this.fetchFormFields(id)
+    this.formfieldId = id;
+
+    // Check if the form is already filled
+    this.checkIfFormFilled().then((isFilled) => {
+      if (isFilled) {
+        console.log('Form is already filled, populating data...');
+      } else {
+        console.log('Form is not filled, fetching empty form fields...');
+        this.fetchFormFields(id);
+      }
+    });
+
+    // Listen for changes in additionalFields to apply validators
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
       fields.forEach((field, index) => {
         const fieldControl = (this.previewForm?.get('additionalFields') as FormArray).at(index) as FormGroup;
 
-        if (field.isrequired===true) {
+        if (field.isrequired === true) {
           fieldControl.get('value')?.setValidators(this.getValidators(field.inputType));
         } else {
           fieldControl.get('value')?.clearValidators();
@@ -62,9 +74,6 @@ export class FormgenerateComponent {
         fieldControl.get('value')?.updateValueAndValidity(); // Recalculate validations
       });
     });
-
-
-
   }
 
   fetchFormFields(id: any): void {
@@ -98,24 +107,24 @@ export class FormgenerateComponent {
   }
 
   onCheckboxChange(event: any, fieldIndex: number): void {
-  const fieldControl = this.additionalFields.at(fieldIndex).get('value');
-  const selectedValues = fieldControl?.value || [];
+    const fieldControl = this.additionalFields.at(fieldIndex).get('value');
+    const selectedValues = fieldControl?.value || [];
 
-  if (event.target.checked) {
-    // Add selected option
-    selectedValues.push(event.target.value);
-  } else {
-    // Remove unselected option
-    const index = selectedValues.indexOf(event.target.value);
-    if (index !== -1) {
-      selectedValues.splice(index, 1);
+    if (event.target.checked) {
+      // Add selected option
+      selectedValues.push(event.target.value);
+    } else {
+      // Remove unselected option
+      const index = selectedValues.indexOf(event.target.value);
+      if (index !== -1) {
+        selectedValues.splice(index, 1);
+      }
     }
-  }
 
-  // Update FormControl value
-  fieldControl?.setValue(selectedValues);
-  fieldControl?.updateValueAndValidity();
-}
+    // Update FormControl value
+    fieldControl?.setValue(selectedValues);
+    fieldControl?.updateValueAndValidity();
+  }
 
 
 
@@ -144,10 +153,10 @@ export class FormgenerateComponent {
     return []; // No validators if 'optional'
   }
 
-    // Getter for additional fields
-    get additionalFields(): FormArray {
-      return this.previewForm?.get('additionalFields') as FormArray;
-    }
+  // Getter for additional fields
+  get additionalFields(): FormArray {
+    return this.previewForm?.get('additionalFields') as FormArray;
+  }
 
   onSubmit() {
     if (this.previewForm?.valid) {
@@ -159,35 +168,35 @@ export class FormgenerateComponent {
       };
 
       this.formService.addform(formData, this.formfieldId).subscribe({
-        next:(res:any)=>{
+        next: (res: any) => {
           const fields = this.fields;
           const userform = res.result.additionalFields
-           const Toast = Swal.mixin({
-                        toast: true,
-                        position: "top-end",
-                        showConfirmButton: false,
-                        timer: 1500,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                          toast.onmouseenter = Swal.stopTimer;
-                          toast.onmouseleave = Swal.resumeTimer;
-                        }
-                      });
-                      Toast.fire({
-                        icon: "success",
-                        title: "Form Submitted successfully"
-                      }).then(()=>{
-                        this.isPreviewMode =true
-                      })
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
+            }
+          });
+          Toast.fire({
+            icon: "success",
+            title: "Form Submitted successfully"
+          }).then(() => {
+            this.isPreviewMode = true
+          })
           const id = res.result._id
-          console.log("Id",id);
+          console.log("Id", id);
           console.log("additionalfields from db", userform);
           this.userFormData = this.processSubmittedData(fields, userform);
 
-        },error :(err:any)=>{
+        }, error: (err: any) => {
           console.log("errrorrr");
         }
-        }) ;
+      });
       console.log("Submitted Form Data:", this.previewForm.value);
     } else {
 
@@ -195,11 +204,11 @@ export class FormgenerateComponent {
     }
   }
 
-
-
-
   onBack() {
-    this.isPreviewMode = false; // Show the form when back is clicked
+    this.route.queryParams.subscribe((params) => {
+      this.patientId = params['patientId'];
+    });
+    this.router.navigate(['/patient/datematrix'], { queryParams: { id: this.patientId } });
   }
 
 
@@ -211,7 +220,148 @@ export class FormgenerateComponent {
     }));
   }
 
-  }
+  checkIfFormFilled(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (this.patientId && this.timepointId && this.formId) {
+        this.formService
+          .getSubmittedForm(this.patientId, this.timepointId, this.formId)
+          .subscribe({
+            next: (response: any) => {
+              if (response && response.result) {
+                // If form data exists, populate the form
+                this.populateFormWithExistingData(response.result);
+                resolve(true);
+              } else {
+                resolve(false);
+              }
+            },
+            error: (err) => {
+              console.error('Error checking if form is filled:', err);
+              resolve(false);
+            },
+          });
+      } else {
+        resolve(false);
+      }
+    });
+  }
+
+  populateFormWithExistingData(existingData: any): void {
+    console.log("existing data: ", existingData);
+    this.prePopulatedFlag = true;
+    console.log("this.prePopulatedFlag : ", this.prePopulatedFlag);
+
+    this.fields = existingData.additionalFields.map((field: any) => field);
+    this.title = existingData.title;
+    this.previewForm = this.fb.group({
+      title: [
+        { value: existingData.title, disabled: true },
+        Validators.required,
+      ],
+      additionalFields: this.fb.array(
+        existingData.additionalFields.map((field: any) =>
+          this.fb.group({
+            label: [{ value: field.label, disabled: true }, Validators.required],
+            value: [
+              { value: field.value || '', disabled: true },
+              this.getDynamicValidators(field),
+            ],
+            inputType: [
+              { value: field.inputType, disabled: true },
+              Validators.required,
+            ],
+            isrequired: [{ value: field.isrequired, disabled: true }],
+            options: [
+              {
+                value: Array.isArray(field.options) ? field.options : [],
+                disabled: true,
+              },
+            ],
+          })
+        )
+      ),
+    });
+    this.previewForm.disable();
+    console.log('Populated form with existing data:', existingData);
+  }
+
+  // Add a method to enable editing
+  enableEditing(): void {
+    if (this.previewForm) {
+      this.previewForm.enable();
+    }
+  }
+
+  navigateBack() {
+    this.location.back();
+  }
+
+  toggleEditMode() {
+    if (this.editModeFlag) {
+      this.editModeFlag = false;
+    } else {
+      this.editModeFlag = true;
+      this.previewForm?.enable();
+    }
+  }
+
+  updateFormResponse() {
+    console.log("update");
+    if (this.previewForm?.valid) {
+      const formData = {
+        ...this.previewForm.value,
+        patientId: this.patientId,
+        timepointId: this.timepointId,
+        formId: this.route.snapshot.queryParams['formId']
+      };
+      console.log("Payload : ", formData);
+      this.formService.updateSubmittedResponse(formData).subscribe({
+        next: (res) => {
+          console.log(res);
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
+            }
+          });
+          Toast.fire({
+            icon: "success",
+            title: "Response Update successfully"
+          }).then(() => {
+            this.editModeFlag = false;
+            this.previewForm?.disable();
+          })
+        },
+        error: (err) => {
+          console.log("Error updating form response: ", err);
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
+            }
+          });
+          Toast.fire({
+            icon: "error",
+            title: err.error.message
+          }).then(() => {
+            this.editModeFlag = false;
+            this.previewForm?.disable();
+          })
+        }
+      });
+    }
+  }
+}
 
 
 
