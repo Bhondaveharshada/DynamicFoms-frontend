@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,13 +10,23 @@ export class FormService {
 
   //apiUrl = "http://localhost:3000"
   constructor(private http:HttpClient) { }
- 
+
+  getSubmittedForm(patientId: string, timepointId: string, formId: string): Observable<any> {
+    return this.http.get(`${environment.api}/submitted`, {
+      params: { patientId, timepointId, formId },
+    });
+  }
+
+  updateSubmittedResponse(payload : Object) {
+    console.log("data from updateSubmittedResponse", payload);
+    return this.http.post(`${environment.api}/update`, payload);
+  }
 
   addform(data:any,fieldsId:any){
     console.log("data from addform",data);
     const payload = { ...data, fieldsId };
-    
-    
+
+
    return this.http.post(`${environment.api}/addform`,payload)
   }
 
@@ -26,7 +37,7 @@ export class FormService {
   addFormFields(data:any, formId:any){
     const {title,addformfields} = data
     console.log("data from service  ",data);
-    
+
     return this.http.post(`${environment.api}/addformfields`, {data,formId});
   }
 
@@ -38,7 +49,12 @@ export class FormService {
   getAllFormFields(){
     return this.http.get(`${environment.api}/getallformsFields`)
   }
-  
+
+  getAllResponses(patientId: string){
+    return this.http.get(`${environment.api}/allResponses/${patientId}`)
+  }
+
+
   updateFormFields(id:any,data:any){
     const {title,addformfields} = data
     return this.http.patch(`${environment.api}/updateFormFields/${id}`,{data})

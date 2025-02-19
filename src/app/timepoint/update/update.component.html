@@ -1,6 +1,6 @@
 <section class="container mt-5">
   <div class="text-center mb-4">
-    <h1 class="display-4 text-dark">Update Timepoint</h1>
+    <h1 class="display-4 text-dark"><strong>Update Timepoint</strong></h1>
   </div>
 
   <div class="card shadow-sm p-4">
@@ -41,12 +41,12 @@
 
       <!-- Action Buttons -->
       <div class="d-flex justify-content-between mt-4">
-        <button type="button" class="btn btn-secondary btn-lg" (click)="navigateBack()">
+        <button type="button" class="btn btn-outline-secondary btn-lg" (click)="navigateBack()">
           <i class="bi bi-arrow-left"></i> Back
         </button>
         <button
           type="submit"
-          class="btn btn-primary btn-lg"
+          class="btn btn-outline-primary btn-lg"
           [disabled]="timepointForm.invalid"
         >
           <i class="bi bi-save"></i> Update

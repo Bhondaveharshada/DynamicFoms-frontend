@@ -75,4 +75,7 @@ export class ListTimepointComponent {
       }
     );
   }
+  back(){
+    this.router.navigate([`/`]);
+  }
 }

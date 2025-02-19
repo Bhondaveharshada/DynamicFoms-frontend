@@ -1,4 +1,7 @@
 <div class="container mt-5">
+    <button class="btn btn-outline-primary mb-4" (click)="back()">
+    <i class="bi bi-arrow-left"></i> Back
+  </button>
   <h2 class="text-center mb-4">Relation Matrix</h2>
   <form [formGroup]="relationsForm" (ngSubmit)="onSubmit()">
     <div class="table-responsive">

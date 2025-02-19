@@ -79,6 +79,10 @@ export class ListComponent implements OnInit {
     });
   }
 
+  home() {
+    this.router.navigate([`/`]);
+  }
+
   goToDateMatrix(patientId: number): void {
     this.router.navigate(['/patient/datematrix'], { queryParams: { id: patientId } });
   }

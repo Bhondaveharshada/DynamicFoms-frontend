@@ -1,11 +1,14 @@
 <section class="container mt-5">
+  <button class="btn btn-outline-primary mb-4" (click)="back()">
+    <i class="bi bi-arrow-left"></i> Back
+  </button>
   <div class="text-center mb-4">
-    <h1 class="display-4">Timepoint Matrix</h1>
+    <h1 class="display-4"><strong>Timepoint Matrix</strong></h1>
   </div>
 
   <div class="card shadow-sm p-4">
     <div class="table-responsive">
-      <table class="table table-bordered table-striped">
+      <table class="table table-bordered table-striped text-center">
         <thead>
           <tr>
             <th *ngFor="let header of headers">{{ header }}</th>
@@ -14,20 +17,19 @@
         <tbody>
           <tr *ngFor="let row of tableData">
             <td>{{ row.formName }}</td>
-            <td *ngFor="let timepoint of timepoints">
-              <ng-container *ngIf="row[timepoint.name] && row.formLink">
+            <td *ngFor="let timepoint of timepoints" class="text-center">
+              <ng-container *ngIf="row[timepoint.name] != '-' && row.formLink; else dashTemplate">
                 <!-- If a date and formLink exist, make it clickable -->
                 <a
-                  [href]="generateFormLink(row.formLink, row.formId , timepoint)"
+                  [href]="generateFormLink(row.formLink, row.formId, timepoint)"
                   class="text-primary text-decoration-none"
                 >
                   {{ row[timepoint.name] }}
                 </a>
               </ng-container>
-              <ng-container *ngIf="!row[timepoint.name] || !row.formLink">
-                <!-- If no date or formLink, show '-' -->
-                {{ row[timepoint.name] || '-' }}
-              </ng-container>
+              <ng-template #dashTemplate>
+                -
+              </ng-template>
             </td>
           </tr>
         </tbody>
