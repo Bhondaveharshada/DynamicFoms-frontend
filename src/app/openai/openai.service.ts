@@ -8,8 +8,7 @@ import { environment } from '../../environments/environment';
 })
 export class OpenaiService {
   private apiUrl = 'https://api.openai.com/v1/chat/completions';
-  private apiKey = environment.openaiKey;;
-
+  private apiKey = environment.openaiKey;
   constructor(private http: HttpClient) {}
 
   generateResponse(prompt: string): Observable<any> {
