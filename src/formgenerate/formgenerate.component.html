@@ -75,14 +75,16 @@
                 *ngFor="let option of fields[fieldIndex]?.options; let i = index"
                 class="form-check"
               >
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="checkbox{{ fieldIndex }}-{{ i }}"
-                  [value]="option"
-                  (change)="onCheckboxChange($event, fieldIndex)"
-                  [checked]="additionalFields.at(fieldIndex).get('value')?.value.includes(option)"
-                />
+              <input
+              class="form-check-input"
+              type="checkbox"
+              id="checkbox{{ fieldIndex }}-{{ i }}"
+              [value]="option"
+              (change)="onCheckboxChange($event, fieldIndex)"
+              [checked]="additionalFields.at(fieldIndex).get('value')?.value.includes(option)"
+              [disabled]="previewForm.disabled"
+              *ngIf="additionalFields.at(fieldIndex).get('value') as checkboxControl"
+            />
                 <label
                   class="form-check-label"
                   [for]="'checkbox' + fieldIndex + '-' + i"
@@ -91,6 +93,7 @@
                 </label>
               </div>
             </div>
+
 
             <!-- Radio -->
             <div *ngSwitchCase="'radio'">
