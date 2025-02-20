@@ -41,7 +41,7 @@ export class FormgenerateComponent {
 
   }
 
-  ngOnInit(): void {
+  async ngOnInit() {
     this.route.queryParams.subscribe((params) => {
       this.patientId = params['patientId'];
       this.timepointId = params['timepointId'];
@@ -51,15 +51,10 @@ export class FormgenerateComponent {
     const id = this.route.snapshot.paramMap.get('id');
     this.formfieldId = id;
 
+    await this.fetchFormFields(id);
+
     // Check if the form is already filled
-    this.checkIfFormFilled().then((isFilled) => {
-      if (isFilled) {
-        console.log('Form is already filled, populating data...');
-      } else {
-        console.log('Form is not filled, fetching empty form fields...');
-        this.fetchFormFields(id);
-      }
-    });
+
 
     // Listen for changes in additionalFields to apply validators
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
@@ -76,7 +71,7 @@ export class FormgenerateComponent {
     });
   }
 
-  fetchFormFields(id: any): void {
+  async fetchFormFields(id: any) {
     this.formService.getFormFields(id).subscribe({
       next: (response: any) => {
         this.formData = response.result;
@@ -98,6 +93,11 @@ export class FormgenerateComponent {
               })
             )
           ),
+        });
+        this.checkIfFormFilled().then((isFilled) => {
+          if (isFilled) {
+            console.log('Form is already filled, populating data...');
+          }
         });
       },
       error: (err: any) => {
@@ -228,7 +228,8 @@ export class FormgenerateComponent {
           .subscribe({
             next: (response: any) => {
               if (response && response.result) {
-                // If form data exists, populate the form
+                console.log("filled response : ", response.result);
+                console.log("preview form : ", this.previewForm);
                 this.populateFormWithExistingData(response.result);
                 resolve(true);
               } else {
@@ -247,43 +248,39 @@ export class FormgenerateComponent {
   }
 
   populateFormWithExistingData(existingData: any): void {
-    console.log("existing data: ", existingData);
-    this.prePopulatedFlag = true;
-    console.log("this.prePopulatedFlag : ", this.prePopulatedFlag);
+    if (!this.previewForm || !this.previewForm.controls['additionalFields']) {
+      console.error("Preview form is not initialized or additionalFields is missing");
+      return;
+    }
 
-    this.fields = existingData.additionalFields.map((field: any) => field);
-    this.title = existingData.title;
-    this.previewForm = this.fb.group({
-      title: [
-        { value: existingData.title, disabled: true },
-        Validators.required,
-      ],
-      additionalFields: this.fb.array(
-        existingData.additionalFields.map((field: any) =>
-          this.fb.group({
-            label: [{ value: field.label, disabled: true }, Validators.required],
-            value: [
-              { value: field.value || '', disabled: true },
-              this.getDynamicValidators(field),
-            ],
-            inputType: [
-              { value: field.inputType, disabled: true },
-              Validators.required,
-            ],
-            isrequired: [{ value: field.isrequired, disabled: true }],
-            options: [
-              {
-                value: Array.isArray(field.options) ? field.options : [],
-                disabled: true,
-              },
-            ],
-          })
-        )
-      ),
+    const additionalFieldsControl = this.previewForm.get('additionalFields') as FormArray;
+
+    existingData.additionalFields.forEach((existingField: any) => {
+      const matchingField = additionalFieldsControl.controls.find((control) => {
+        const controlValue = control.value;
+        return controlValue.inputType === existingField.inputType && controlValue.label === existingField.label;
+      });
+
+      if (matchingField) {
+        const fieldFormGroup = matchingField as FormGroup;
+
+        if (existingField.inputType === 'checkbox') {
+          // For checkboxes, set the value as an array of selected options
+          fieldFormGroup.get('value')?.setValue(existingField.value);
+        } else if (existingField.inputType === 'radio') {
+          // For radio buttons, set the selected value
+          fieldFormGroup.get('value')?.setValue(existingField.value);
+        } else {
+          // For other input types, set the value directly
+          fieldFormGroup.get('value')?.setValue(existingField.value);
+        }
+      }
     });
     this.previewForm.disable();
-    console.log('Populated form with existing data:', existingData);
+    this.editModeFlag = false;
+    this.prePopulatedFlag = true;
   }
+
 
   // Add a method to enable editing
   enableEditing(): void {
