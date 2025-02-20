@@ -5,6 +5,7 @@ import { CommonModule, formatCurrency } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormService } from '../services/form.service';
 import { OpenaiService } from '../app/openai/openai.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-dragdrop',
@@ -48,43 +49,65 @@ export class DragdropComponent {
 
   processPrompt(): void {
     if (!this.prompt) return;
-    let prompt = `I have specified the fields I want in my form. `+ this.prompt +` Please generate a complete and valid JSON structure for the form based on the following requirements and example structure:
 
-Requirements:
+    let prompt = `I have specified the fields I want in my form. ` + this.prompt + ` Please generate a complete and valid JSON structure for the form based on the following requirements and example structure:
 
-Include all the fields I mentioned in the input prompt.
-Each field should have the following properties:
-label: The text label for the field.
-inputType: The type of input (e.g., text, date, radio, etc.).
-isrequired: A boolean indicating if the field is mandatory.
-options: An array of options, if applicable (e.g., for radio buttons or checkboxes).
-Example JSON Structure:
-"additionalFields": [
-  {
-    "label": "Date:",
-    "inputType": "date",
-    "isrequired": false,
-    "options": []
-  },
-  {
-    "label": "Have there been any new Adverse Events since the last visit?",
-    "inputType": "radio",
-    "isrequired": false,
-    "options": ["yes", "no"]
-  }
-]
-Please ensure that the response is formatted as a proper JSON object and matches the example structure. Only include fields that are relevant to the provided input.
-the json objects should be properly closed at end
-`
-    console.log("Promp : ", prompt);
+  Requirements:
+
+  Include all the fields I mentioned in the input prompt.
+  Each field should have the following properties:
+  label: The text label for the field.
+  inputType: The type of input (e.g., text, date, radio, etc.).
+  isrequired: A boolean indicating if the field is mandatory.
+  options: An array of options, if applicable (e.g., for radio buttons or checkboxes).
+  Example JSON Structure:
+  "additionalFields": [
+    {
+      "label": "Date:",
+      "inputType": "date",
+      "isrequired": false,
+      "options": []
+    },
+    {
+      "label": "Have there been any new Adverse Events since the last visit?",
+      "inputType": "radio",
+      "isrequired": false,
+      "options": ["yes", "no"]
+    }
+  ]
+  Please ensure that the response is formatted as a proper JSON object and matches the example structure. Only include fields that are relevant to the provided input.
+  the json objects should be properly closed at end
+  `;
+
+    console.log("Prompt: ", prompt);
+
+    // Show SweetAlert loader
+    Swal.fire({
+      title: 'Processing...',
+      text: 'Generating JSON structure, please wait.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading(); // Show loading spinner
+      }
+    });
 
     this.openaiService.generateResponse(prompt).subscribe({
       next: (res) => {
+        Swal.close(); // Close SweetAlert loader
         this.promptResponse = res.choices[0].message.content;
-        console.log("Prompt Response : ", this.promptResponse);
+        console.log("Prompt Response: ", this.promptResponse);
         this.additionalFields = JSON.parse(this.promptResponse).additionalFields;
       },
-      error: (err) => console.error('Error processing prompt:', err),
+      error: (err) => {
+        Swal.close(); // Close SweetAlert loader
+        console.error('Error processing prompt:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'An error occurred while processing the prompt. Please try again.',
+        });
+      }
     });
   }
 
