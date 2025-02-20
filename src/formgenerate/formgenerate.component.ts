@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ReactiveFormsModule, Validators, FormGroup, FormBuilder, FormArray } from '@angular/forms';
+import { ReactiveFormsModule, Validators, FormGroup, FormBuilder, FormArray, FormControl } from '@angular/forms';
 import { CommonModule, JsonPipe, Location } from '@angular/common';
 import { FormService } from '../services/form.service';
 import Swal from 'sweetalert2';
@@ -86,14 +86,18 @@ export class FormgenerateComponent {
             this.formData.additionalFields.map((field: any) =>
               this.fb.group({
                 label: [field.label, Validators.required],
-                value: field.inputType === 'checkbox' ? [[]] : ['', this.getDynamicValidators(field)],
+                value:
+                  field.inputType === 'checkbox'
+                    ? [Array.isArray(field.value) ? field.value : []] // Ensure value is an array for checkboxes
+                    : [field.value || '', this.getDynamicValidators(field)], // Default value for other types
                 inputType: [field.inputType, Validators.required],
                 isrequired: [field.isrequired],
-                options: [Array.isArray(field.options) ? field.options : []],
+                options: [Array.isArray(field.options) ? field.options : []], // Ensure options are an array
               })
             )
           ),
         });
+
         this.checkIfFormFilled().then((isFilled) => {
           if (isFilled) {
             console.log('Form is already filled, populating data...');
@@ -106,25 +110,20 @@ export class FormgenerateComponent {
     });
   }
 
-  onCheckboxChange(event: any, fieldIndex: number): void {
-    const fieldControl = this.additionalFields.at(fieldIndex).get('value');
-    const selectedValues = fieldControl?.value || [];
+  onCheckboxChange(event: Event, fieldIndex: number): void {
+    const checkboxArray = this.additionalFields.at(fieldIndex).get('value') as FormControl;
+    const value = (event.target as HTMLInputElement).value;
 
-    if (event.target.checked) {
-      // Add selected option
-      selectedValues.push(event.target.value);
+    if ((event.target as HTMLInputElement).checked) {
+      // Add the value to the checkbox array
+      checkboxArray.setValue([...checkboxArray.value, value]);
     } else {
-      // Remove unselected option
-      const index = selectedValues.indexOf(event.target.value);
-      if (index !== -1) {
-        selectedValues.splice(index, 1);
-      }
+      // Remove the value from the checkbox array
+      checkboxArray.setValue(checkboxArray.value.filter((v: string) => v !== value));
     }
-
-    // Update FormControl value
-    fieldControl?.setValue(selectedValues);
-    fieldControl?.updateValueAndValidity();
   }
+
+
 
 
 
