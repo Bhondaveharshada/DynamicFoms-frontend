@@ -47,12 +47,6 @@ export class RelationMatrixComponent implements OnInit {
       await this.fetchForms();
       console.log("Forms fetched successfully.");
 
-      await this.fetchTimepoints();
-      console.log("Timepoints fetched successfully.");
-
-      await this.fetchRelations();
-      console.log("Relations fetched successfully.");
-
       // Initialize form only after all functions have completed
 
       console.log("Form initialized:", this.relationsForm.value);
@@ -73,6 +67,8 @@ export class RelationMatrixComponent implements OnInit {
       (response: any) => {
         this.forms = response.result;
         console.log('Forms fetched successfully:', this.forms);
+        this.fetchTimepoints();
+        console.log("Timepoints fetched successfully.");
       },
       (error) => {
         console.error(error);
@@ -86,6 +82,8 @@ export class RelationMatrixComponent implements OnInit {
       (data: any) => {
         this.timepoints = data;
         console.log('Timepoints fetched successfully:', this.timepoints);
+        this.fetchRelations();
+        console.log("Relations fetched successfully.");
       },
       (error) => {
         console.error(error);
