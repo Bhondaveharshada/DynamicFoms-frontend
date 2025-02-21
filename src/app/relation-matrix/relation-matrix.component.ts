@@ -30,16 +30,45 @@ export class RelationMatrixComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.fetchForms();
-    this.fetchTimepoints();
-    this.initializeForm(); // Initialize the form after fetching forms
-    this.fetchRelations();
+  async ngOnInit() {
+    Swal.fire({
+      title: 'Loading...',
+      text: 'Please wait while data is being loaded.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
 
+    console.log("Starting data fetch...");
+
+    try {
+      // Execute functions one after another
+      await this.fetchForms();
+      console.log("Forms fetched successfully.");
+
+      await this.fetchTimepoints();
+      console.log("Timepoints fetched successfully.");
+
+      await this.fetchRelations();
+      console.log("Relations fetched successfully.");
+
+      // Initialize form only after all functions have completed
+
+      console.log("Form initialized:", this.relationsForm.value);
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      Swal.fire('Error', 'Failed to load data.', 'error');
+      return;
+    }
+
+    Swal.close(); // Close loader after everything is done
+    console.log("Loader closed.");
   }
 
   // Fetch forms from backend
-  fetchForms() {
+  async fetchForms() {
     this.formService.getAllFormFields().subscribe(
       (response: any) => {
         this.forms = response.result;
@@ -52,7 +81,7 @@ export class RelationMatrixComponent implements OnInit {
   }
 
   // Fetch timepoints from backend
-  fetchTimepoints() {
+  async fetchTimepoints() {
     this.timepointService.getTimepoints().subscribe(
       (data: any) => {
         this.timepoints = data;
@@ -65,12 +94,12 @@ export class RelationMatrixComponent implements OnInit {
   }
 
   // Fetch existing relations from backend
-  fetchRelations() {
+  async fetchRelations() {
     this.relationService.getAllRelations().subscribe(
       (response: any) => {
         this.existingRelations = response.data || [];
         console.log('Existing relations fetched successfully:', this.existingRelations);
-        this.initializeForm(); // Initialize the form after fetching relations
+        this.initializeForm();
       },
       (error) => {
         console.error(error);
@@ -79,7 +108,7 @@ export class RelationMatrixComponent implements OnInit {
   }
 
   initializeForm() {
-    if (this.forms.length && this.timepoints.length) {
+
       const relationsArray = this.relationsForm.get('relations') as FormArray;
       relationsArray.clear(); // Clear any existing form controls
 
@@ -97,7 +126,6 @@ export class RelationMatrixComponent implements OnInit {
       });
 
       console.log('Relation form initialized:', this.relationsForm.value);
-    }
   }
 
   onCheckboxChange(formIndex: number, timepointId: string, event: Event): void {
