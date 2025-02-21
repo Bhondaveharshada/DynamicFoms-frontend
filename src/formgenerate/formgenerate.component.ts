@@ -4,6 +4,9 @@ import { ReactiveFormsModule, Validators, FormGroup, FormBuilder, FormArray, For
 import { CommonModule, JsonPipe, Location } from '@angular/common';
 import { FormService } from '../services/form.service';
 import Swal from 'sweetalert2';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { PatientService } from '../app/patient/service/patient-service.service';
 
 interface Field {
   options?: string[]; // Unified for both checkboxes and radio buttons
@@ -36,8 +39,9 @@ export class FormgenerateComponent {
   title = "";
   prePopulatedFlag = false;
   editModeFlag = false;
+  patientData: any ;
 
-  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router) {
+  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router, private patientService: PatientService) {
 
   }
 
@@ -55,7 +59,7 @@ export class FormgenerateComponent {
 
     // Check if the form is already filled
 
-
+    this.fetchPatientData();
     // Listen for changes in additionalFields to apply validators
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
       fields.forEach((field, index) => {
@@ -357,6 +361,106 @@ export class FormgenerateComponent {
       });
     }
   }
+
+
+  saveAsPDF() {
+    const printContent = document.querySelector('.form-preview') as HTMLElement;
+
+    if (!printContent) {
+      console.error('Form preview container not found.');
+      return;
+    }
+
+    // Clone the form content to modify it without affecting the original
+    const clonedContent = printContent.cloneNode(true) as HTMLElement;
+
+    // Remove unwanted buttons (update, edit, print, etc.)
+    const buttons = clonedContent.querySelectorAll('button');
+    buttons.forEach((button) => button.remove());
+
+    // Temporarily remove placeholders from inputs and textareas
+    const inputs = clonedContent.querySelectorAll('input, textarea');
+    const placeholders: string[] = [];
+    inputs.forEach((input, index) => {
+      placeholders[index] = input.getAttribute('placeholder') || ''; // Save current placeholder
+      input.removeAttribute('placeholder'); // Remove placeholder
+    });
+
+    // Append the cloned content to the body temporarily (hidden)
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100%';
+    container.style.zIndex = '-1';
+    container.appendChild(clonedContent);
+    document.body.appendChild(container);
+
+    // Use html2canvas to capture the modified content
+    html2canvas(clonedContent, {
+      scale: 2, // Increase resolution for better clarity
+      useCORS: true, // Handle cross-origin images
+      width: clonedContent.scrollWidth, // Full width of the content
+      height: clonedContent.scrollHeight, // Full height of the content
+    })
+      .then((canvas) => {
+        // Convert the canvas to an image
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4'); // Create PDF in portrait mode
+
+        // Calculate dimensions to fit the content on an A4 page
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        // Add the image to the PDF
+        let yOffset = 0;
+        while (yOffset < pdfHeight) {
+          pdf.addImage(
+            imgData,
+            'PNG',
+            0,
+            -yOffset,
+            pdfWidth,
+            Math.min(pdfHeight - yOffset, pdf.internal.pageSize.getHeight())
+          );
+          yOffset += pdf.internal.pageSize.getHeight();
+          if (yOffset < pdfHeight) pdf.addPage();
+        }
+
+        // Save the PDF
+        if(this.patientData){
+          pdf.save(this.patientData.id+"_"+this.patientData.name+"_"+this.formData.title+'.pdf');
+        } else {
+          pdf.save(this.formData.title+'.pdf');
+        }
+      })
+      .catch((error) => {
+        console.error('Error capturing the form:', error);
+      })
+      .finally(() => {
+        // Restore placeholders
+        inputs.forEach((input, index) => {
+          if (placeholders[index]) {
+            input.setAttribute('placeholder', placeholders[index]);
+          }
+        });
+
+        // Remove the temporary container
+        document.body.removeChild(container);
+      });
+  }
+
+  fetchPatientData(){
+    if(this.patientId){
+      this.patientService.getPatientById(this.patientId).subscribe({
+        next: (response) => {
+          console.log("patinent data : ", response);
+          this.patientData = response;
+        }
+      });
+    }
+  }
+
 }
 
 

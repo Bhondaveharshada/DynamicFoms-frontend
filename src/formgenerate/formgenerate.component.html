@@ -5,6 +5,7 @@
     <button class="btn btn-outline-primary mb-4" (click)="navigateBack()">
       <i class="bi bi-arrow-left"></i> Back
     </button>
+    <div class="form-preview">
     <h1 class="text-center card-title">{{ formData?.title || title }}</h1>
 
     <form *ngIf="previewForm" [formGroup]="previewForm" class="row g-4">
@@ -178,9 +179,19 @@
           Update
         </button>
       </div>
+      <div class="d-flex justify-content-center col-12">
+        <button
+          class="btn btn-primary "
+          (click)="saveAsPDF()"
+        >
+          Save PDF
+        </button>
+
+      </div>
+
     </form>
   </div>
-
+</div>
 
 
 </div>
