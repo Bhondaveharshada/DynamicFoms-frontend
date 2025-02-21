@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { PatientService } from '../app/patient/service/patient-service.service';
+import { EmailService } from '../app/Email/email.service';
 
 interface Field {
   options?: string[]; // Unified for both checkboxes and radio buttons
@@ -41,7 +42,7 @@ export class FormgenerateComponent {
   editModeFlag = false;
   patientData: any ;
 
-  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router, private patientService: PatientService) {
+  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router, private patientService: PatientService, private emailService : EmailService) {
 
   }
 
@@ -174,6 +175,28 @@ export class FormgenerateComponent {
         next: (res: any) => {
           const fields = this.fields;
           const userform = res.result.additionalFields
+          let payload = {
+            id: this.patientId,
+            name: this.patientData.name,
+            formName: this.formData.title,
+            formData: userform
+          }
+          this.emailService.sendEmail(payload).subscribe(
+            {
+              next : (res) => {
+                Swal.fire({
+                  title: 'Success!',
+                  text: 'Email sent successfully!',
+                  icon: 'success',
+                  confirmButtonText: 'OK'
+                });
+                console.log("Email sent", res);
+
+              },
+              error: (err) => {
+                console.error("Error sending email", err);
+              }
+            });
           const Toast = Swal.mixin({
             toast: true,
             position: "top-end",
