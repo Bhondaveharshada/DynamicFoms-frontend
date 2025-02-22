@@ -153,8 +153,20 @@ export class FormgenerateComponent {
   getDynamicValidators(field: any) {
     if (field.isrequired) {
       return this.getValidators(field.inputType); // Apply validators if 'required'
+    } else {
+      switch (field.inputType) {
+        case 'email':
+          return [Validators.email];
+        case 'number':
+          return [Validators.pattern(/^[0-9]{10}$/)];
+        case 'text':
+          return [Validators.minLength(3)];
+        case 'password':
+          return [Validators.minLength(6)];
+        default:
+          return []; // Default validator
+      }
     }
-    return []; // No validators if 'optional'
   }
 
   // Getter for additional fields
@@ -225,7 +237,12 @@ export class FormgenerateComponent {
       });
       console.log("Submitted Form Data:", this.previewForm.value);
     } else {
-
+      Swal.fire({
+        title: 'Error!',
+        text: 'Fill Required Fields correctly!',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
       console.log("Form is invalid");
     }
   }
