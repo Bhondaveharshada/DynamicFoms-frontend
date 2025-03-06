@@ -36,29 +36,22 @@ export class DragdropComponent {
   prompt = '';
   promptResponse = '';
   formFields: any[] = [];
+  formSubmitted: boolean = false; 
 
   all = ['text', 'number', 'email', 'password', 'date', 'checkbox', 'radio', 'textarea'];
 
   additionalFields: FormRow[] = [];
   
-  // Hidden container for new row creation
   newRowPlaceholder: any[] = [];
 
-  /** Get all field list IDs for connecting drop lists */
   getFieldsListIds(): string[] {
-    // Include field lists and the new row placeholder
     return [...this.additionalFields.map((_, index) => `field-list-${index}`), 'new-row-placeholder'];
   }
 
-  /** 
-   * Enhanced drop handler that supports:
-   * 1. Moving within the same container
-   * 2. Adding fields to existing rows
-   * 3. Creating new rows when dropping to the hidden row placeholder
-   */
+  
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
-      // Moving within the same container
+     
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       const draggedFieldType = event.item.data;
@@ -190,54 +183,137 @@ export class DragdropComponent {
     });
   }
 
-  /** Saves Form */
   onSave(event: Event) {
     event.preventDefault();
+    this.formSubmitted = true; 
+  
+    // Validate fields
+    let isValid = true;
+    const validationMessages: string[] = [];
+  
+    // this.additionalFields.forEach((row, rowIdx) => {
+    //   row.fields.forEach((field, fieldIdx) => {
+        
+    //     if (!field.label || field.label.trim() === '') {
+    //       isValid = false;
+    //       validationMessages.push(`Row ${rowIdx + 1}, Field ${fieldIdx + 1}: Label is required.`);
+    //     }
 
+    //     if ((field.inputType === 'checkbox' || field.inputType === 'radio') && field.options.length > 0) {
+    //       field.options.forEach((option, optionIdx) => {
+    //         if (!option || option.trim() === '') {
+    //           isValid = false;
+    //           validationMessages.push(`Row ${rowIdx + 1}, Field ${fieldIdx + 1}, Option ${optionIdx + 1}: Option text is required.`);
+    //         }
+    //       });
+    //     }
+    //   });
+    // });
+  
+    // If validation fails, show error messages
+    if (!isValid) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Validation Error', 
+        html: validationMessages.join('<br>') 
+      });
+      return;
+    }
+  
+    // If validation passes, proceed to save the form
     const formData = {
       title: this.title,
       additionalFields: this.additionalFields.map(row => ({
         fields: row.fields.map(field => ({
-          label: field.label,
+          label: field.label || 'Untitled',
           inputType: field.inputType,
           isrequired: field.required,
           options: field.options || []
         }))
       }))
     };
-    console.log("formData : ", formData);
+  
+    // Log the exact data being sent to the server
+    console.log("Sending form data structure:", JSON.stringify(formData, null, 2));
+  
     const formId = new Date().getTime();
+  
+    // Show loading indicator
+    Swal.fire({ 
+      title: 'Saving...', 
+      text: 'Please wait', 
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading() 
+    });
+  
     this.formService.addFormFields(formData, formId).subscribe({
       next: (res: any) => {
-
+        Swal.close();
+        console.log('Form saved successfully:', res);
         const id = res.result._id;
         this._id = id;
         this.formLink = `${window.location.origin}/form/${id}/${formId}`;
-        console.log('formlink form onsave fun', typeof this.formLink, this.formLink);
-        const stringLink = `${this.formLink}`;
-        console.log('String link', String(stringLink));
-        /*  this.notyf.open({ type: 'success', message: 'Form submitted successfully!' }); */
+        Swal.fire({ icon: 'success', title: 'Success', text: 'Form saved successfully!' });
         this.saveLink();
         this.fetchForms();
-
       },
-      error: (err: any) => console.error('Error saving form:', err),
+      error: (err: any) => {
+        Swal.close();
+        console.error('Error saving form (full details):', err);
+        let errorMessage = 'An unknown error occurred';
+        if (err.error && err.error.message) {
+          errorMessage = err.error.message;
+        }
+        Swal.fire({ 
+          icon: 'error', 
+          title: 'Error', 
+          text: `Failed to save form: ${errorMessage}` 
+        });
+      },
     });
-
-
   }
-
-  /** Saves the Generated Form Link */
+  
   saveLink() {
-    if (this.formLink && !this.isLinkSaved) {
-      this.formService.saveFormLink(this._id, this.formLink).subscribe({
-        next: (res: any) => {
-          this.isLinkSaved = true;
-          console.log('Link saved successfully', res.result);
-        },
-        error: (err: any) => console.error('Error saving link:', err),
-      });
+    if (!this.formLink || !this._id) {
+      console.error('Missing form link or ID');
+      return;
     }
+  
+    // Show loading indicator
+    const savingToast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false
+    });
+    savingToast.fire({ title: 'Saving link...', icon: 'info' });
+  
+    this.formService.saveFormLink(this._id, this.formLink).subscribe({
+      next: (res: any) => {
+        this.isLinkSaved = true;
+        console.log('Link saved successfully:', res);
+        savingToast.close();
+        
+        // Show success toast
+        Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        }).fire({ title: 'Link saved successfully!', icon: 'success' });
+      },
+      error: (err: any) => {
+        console.error('Error saving link:', err);
+        savingToast.close();
+        
+        // Show error toast
+        Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        }).fire({ title: 'Failed to save link', icon: 'error' });
+      },
+    });
   }
 
   /** Processes AI Prompt */
@@ -285,7 +361,6 @@ export class DragdropComponent {
     return index;
   }
 
-  /** Prevents Returning Dragged Elements to Sidebar */
   noReturnPredicate() {
     return false;
   }
