@@ -1,10 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormService } from '../services/form.service';
-import { ChangeDetectorRef } from '@angular/core';
 import { OpenaiService } from '../app/openai/openai.service';
 import Swal from 'sweetalert2';
 
@@ -21,6 +20,7 @@ interface FormRow {
 
 @Component({
   selector: 'app-dragdrop',
+  standalone: true,
   imports: [RouterModule, CommonModule, FormsModule, DragDropModule],
   templateUrl: './dragdrop.component.html',
   styleUrl: './dragdrop.component.css'
@@ -46,6 +46,10 @@ export class DragdropComponent {
 
   getFieldsListIds(): string[] {
     return [...this.additionalFields.map((_, index) => `field-list-${index}`), 'new-row-placeholder'];
+  }
+
+  getRowClass(row: FormRow): string {
+    return row.fields.length === 1 ? 'form-row-container single-item' : 'form-row-container';
   }
 
   
@@ -85,10 +89,20 @@ export class DragdropComponent {
           }
         }
       }
-      
+      this.updateRowClasses();
       // Trigger change detection
       this.cdr.detectChanges();
     }
+  }
+
+    updateRowClasses() {
+      this.additionalFields.forEach(row => {
+          if (row.fields.length === 1) {
+             
+          } else {
+              // row.classList.remove('single-item');
+          }
+      });
   }
 
   /** Adds a New Field */
@@ -98,6 +112,7 @@ export class DragdropComponent {
       this.additionalFields[rowIndex].fields.push(newField);
       this.cdr.detectChanges();
     }
+    this.updateRowClasses();
   }
 
   /** Adds a new row with one default field */
@@ -122,6 +137,7 @@ export class DragdropComponent {
       }
       this.cdr.detectChanges();
     }
+    this.updateRowClasses();
   }
 
   /** Handles Field Type Change */
@@ -197,9 +213,7 @@ export class DragdropComponent {
     //     if (!field.label || field.label.trim() === '') {
     //       isValid = false;
     //       validationMessages.push(`Row ${rowIdx + 1}, Field ${fieldIdx + 1}: Label is required.`);
-    //     }
-
-    //     if ((field.inputType === 'checkbox' || field.inputType === 'radio') && field.options.length > 0) {
+    //     }... //     if ((field.inputType === 'checkbox' || field.inputType === 'radio') && field.options.length > 0) {
     //       field.options.forEach((option, optionIdx) => {
     //         if (!option || option.trim() === '') {
     //           isValid = false;
@@ -259,7 +273,7 @@ export class DragdropComponent {
       },
       error: (err: any) => {
         Swal.close();
-        console.error('Error saving form (full details):', err);
+        // console.error('Error saving form (full details):', err);
         let errorMessage = 'An unknown error occurred';
         if (err.error && err.error.message) {
           errorMessage = err.error.message;
