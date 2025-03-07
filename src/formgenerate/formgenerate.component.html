@@ -72,18 +72,7 @@
                     <small *ngIf="field.get('value')?.errors?.['requiredTrue']">You must check at least 1 box to
                       proceed.</small>
                   </div>
-                  <select class="form-select mb-2">
-                    <option value="text">Text</option>
-                    <option value="number">Number</option>
-                    <!-- Add other options as needed -->
-                  </select>
-
-                  <div class="form-check mt-2">
-                    <input type="checkbox" class="form-check-input" id="required-{{ rowIndex }}-{{ fieldIndex }}" />
-                    <label class="form-check-label" for="required-{{ rowIndex }}-{{ fieldIndex }}">Required</label>
-                  </div>
-
-                  <button class="btn btn-outline-danger btn-sm mt-2">Remove</button>
+                  <!-- SELECT ELEMENT REMOVED HERE -->
                 </div>
               </div>
             </div>
