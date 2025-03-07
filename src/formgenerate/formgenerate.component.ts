@@ -17,6 +17,7 @@ interface Field {
   _id: string;
 }
 
+
 @Component({
   selector: 'app-formgenerate',
   imports: [RouterModule, ReactiveFormsModule, CommonModule],
@@ -25,9 +26,6 @@ interface Field {
 })
 export class FormgenerateComponent {
   previewForm: FormGroup | null = null;
-
-
-  // Replace with the ObjectId you want to fetch
 
   userFormData: any;
   formData: any = null; // Static title and question
@@ -58,9 +56,8 @@ export class FormgenerateComponent {
 
     await this.fetchFormFields(id);
 
-    // Check if the form is already filled
-
     this.fetchPatientData();
+  
     // Listen for changes in additionalFields to apply validators
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
       fields.forEach((field, index) => {
@@ -81,23 +78,28 @@ export class FormgenerateComponent {
       next: (response: any) => {
         this.formData = response.result;
 
-        // Use the unified 'options' field for both checkbox and radio inputs
         this.fields = response.result.additionalFields.map((field: any) => field);
 
         console.log("Fields from backend:", this.fields);
         this.previewForm = this.fb.group({
           title: [this.formData.title, Validators.required],
           additionalFields: this.fb.array(
-            this.formData.additionalFields.map((field: any) =>
+            this.formData.additionalFields.map((row: any) =>
               this.fb.group({
-                label: [field.label, Validators.required],
-                value:
-                  field.inputType === 'checkbox'
-                    ? [Array.isArray(field.value) ? field.value : []] // Ensure value is an array for checkboxes
-                    : [field.value || '', this.getDynamicValidators(field)], // Default value for other types
-                inputType: [field.inputType, Validators.required],
-                isrequired: [field.isrequired],
-                options: [Array.isArray(field.options) ? field.options : []], // Ensure options are an array
+                fields: this.fb.array(
+                  row.fields.map((field: any) =>
+                    this.fb.group({
+                      label: [field.label, Validators.required],
+                      value:
+                        field.inputType === 'checkbox'
+                          ? [Array.isArray(field.value) ? field.value : []]
+                          : [field.value || '', this.getDynamicValidators(field)],
+                      inputType: [field.inputType, Validators.required],
+                      isrequired: [field.isrequired],
+                      options: [Array.isArray(field.options) ? field.options : []],
+                    })
+                  )
+                )
               })
             )
           ),
@@ -115,21 +117,16 @@ export class FormgenerateComponent {
     });
   }
 
-  onCheckboxChange(event: Event, fieldIndex: number): void {
-    const checkboxArray = this.additionalFields.at(fieldIndex).get('value') as FormControl;
+  onCheckboxChange(event: Event, rowIndex: number, fieldIndex: number): void {
+    const checkboxArray = this.getFields(rowIndex).at(fieldIndex).get('value') as FormControl;
     const value = (event.target as HTMLInputElement).value;
 
     if ((event.target as HTMLInputElement).checked) {
-      // Add the value to the checkbox array
       checkboxArray.setValue([...checkboxArray.value, value]);
     } else {
-      // Remove the value from the checkbox array
       checkboxArray.setValue(checkboxArray.value.filter((v: string) => v !== value));
     }
   }
-
-
-
 
 
   getValidators(inputType: string) {
@@ -168,12 +165,13 @@ export class FormgenerateComponent {
       }
     }
   }
-
-  // Getter for additional fields
   get additionalFields(): FormArray {
     return this.previewForm?.get('additionalFields') as FormArray;
   }
 
+  getFields(rowIndex: number): FormArray {
+    return this.additionalFields.at(rowIndex).get('fields') as FormArray;
+  }
   onSubmit() {
     if (this.previewForm?.valid) {
       const formData = {

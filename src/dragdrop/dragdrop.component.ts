@@ -48,9 +48,18 @@ export class DragdropComponent {
     return [...this.additionalFields.map((_, index) => `field-list-${index}`), 'new-row-placeholder'];
   }
 
-  getRowClass(row: FormRow): string {
-    return row.fields.length === 1 ? 'form-row-container single-item' : 'form-row-container';
+ // Add or update this method in your component
+getRowClass(row: any): string {
+  // Standard row class
+  let classes = 'form-row-container';
+  
+  // Add single-item class if there's only one field
+  if (row.fields && row.fields.length === 1) {
+    classes += ' single-item';
   }
+  
+  return classes;
+}
 
   
   drop(event: CdkDragDrop<any[]>) {
@@ -286,6 +295,7 @@ export class DragdropComponent {
       },
     });
   }
+
   
   saveLink() {
     if (!this.formLink || !this._id) {

@@ -1,203 +1,116 @@
 <div class="d-flex justify-content-center mt-4">
-
-  <div *ngIf="!isPreviewMode" class=" p-5 shadow w-50">
-    <!-- Form Title -->
+  <div *ngIf="!isPreviewMode" class="p-5 shadow w-75">
     <button class="btn btn-outline-primary mb-4" (click)="navigateBack()">
       <i class="bi bi-arrow-left"></i> Back
     </button>
     <div class="form-preview">
-    <h1 class="text-center card-title">{{ formData?.title || title }}</h1>
+      <h1 class="text-center card-title">{{ formData?.title || title }}</h1>
 
-    <form *ngIf="previewForm" [formGroup]="previewForm" class="row g-4">
-      <!-- Form Fields -->
-      <div formArrayName="additionalFields" class="w-100">
-        <div
-          *ngFor="let field of additionalFields.controls; let fieldIndex = index"
-          [formGroupName]="fieldIndex"
-          class="col-12"
-        >
-          <!-- Field Label -->
-          <label class="form-label fw-bold">
-            {{ fields[fieldIndex]['label'] }}
-            <span *ngIf="fields[fieldIndex]?.isrequired" class="text-danger">*</span>
-          </label>
+      <form *ngIf="previewForm" [formGroup]="previewForm" class="form row g-3">
+        <!-- Iterate over each row -->
+        <div formArrayName="additionalFields" class="w-100">
+          <div *ngFor="let row of additionalFields.controls; let rowIndex = index" [formGroupName]="rowIndex"
+            class="mb-4 p-3 border rounded">
+            <!-- Iterate over each field in the row -->
+            <div formArrayName="fields" class="d-flex flex-wrap">
+              <div *ngFor="let field of getFields(rowIndex).controls; let fieldIndex = index"
+                [formGroupName]="fieldIndex" class="col-md-4 mb-3">
+                <div class="form-field p-3 border rounded">
+                  <!-- Field Label -->
+                  <label class="form-label fw-bold">
+                    {{ field.value.label }}
+                    <span *ngIf="field.value.isrequired" class="text-danger">*</span>
+                  </label>
 
+                  <!-- Input Types -->
+                  <ng-container [ngSwitch]="field.value.inputType">
+                    <input *ngSwitchCase="'text'" type="text" class="form-control" formControlName="value"
+                      placeholder="Enter text" />
+                    <input *ngSwitchCase="'number'" type="number" class="form-control" formControlName="value"
+                      placeholder="Enter a number" />
+                    <textarea *ngSwitchCase="'textarea'" type="value" class="form-control"
+                      formControlName="value"></textarea>
+                    <input *ngSwitchCase="'email'" type="email" class="form-control" formControlName="value"
+                      placeholder="Enter email" />
+                    <input *ngSwitchCase="'password'" type="password" class="form-control" formControlName="value"
+                      placeholder="Enter password" />
+                    <input *ngSwitchCase="'date'" type="date" class="form-control" formControlName="value" />
 
-          <!-- Input Types -->
-          <ng-container [ngSwitch]="fields[fieldIndex]['inputType']">
-            <input
-              *ngSwitchCase="'text'"
-              type="text"
-              class="form-control"
-              formControlName="value"
-              placeholder="Enter text"
-            />
-            <input
-              *ngSwitchCase="'number'"
-              type="number"
-              class="form-control"
-              formControlName="value"
-              placeholder="Enter a number"
-            />
-            <textarea
-              *ngSwitchCase="'textarea'"
-              type="value"
-              class="form-control"
-              formControlName="value"
+                    <!-- Checkbox -->
+                    <div *ngSwitchCase="'checkbox'">
+                      <div *ngFor="let option of field.value.options; let i = index" class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                          id="checkbox{{ rowIndex }}-{{ fieldIndex }}-{{ i }}" [value]="option"
+                          (change)="onCheckboxChange($event, rowIndex, fieldIndex)"
+                          [checked]="field.value.value.includes(option)" [disabled]="previewForm.disabled" />
+                        <label class="form-check-label" [for]="'checkbox' + rowIndex + '-' + fieldIndex + '-' + i">
+                          {{ option }}
+                        </label>
+                      </div>
+                    </div>
 
-            ></textarea>
+                    <!-- Radio -->
+                    <div *ngSwitchCase="'radio'">
+                      <div *ngFor="let option of field.value.options; let i = index" class="form-check">
+                        <input class="form-check-input" type="radio" id="radio{{ rowIndex }}-{{ fieldIndex }}-{{ i }}"
+                          [value]="option" formControlName="value" />
+                        <label class="form-check-label" [for]="'radio' + rowIndex + '-' + fieldIndex + '-' + i">
+                          {{ option }}
+                        </label>
+                      </div>
+                    </div>
+                  </ng-container>
 
-            <input
-              *ngSwitchCase="'email'"
-              type="email"
-              class="form-control"
-              formControlName="value"
-              placeholder="Enter email"
-            />
+                  <!-- Error Messages -->
+                  <div *ngIf="field.get('value')?.touched && field.get('value')?.invalid" class="text-danger mt-2">
+                    <small *ngIf="field.get('value')?.errors?.['required']">This field is required.</small>
+                    <small *ngIf="field.get('value')?.errors?.['email']">Please enter a valid email address.</small>
+                    <small *ngIf="field.get('value')?.errors?.['pattern']">Only numeric values are allowed. it must be
+                      exactly 10 digits</small>
+                    <small *ngIf="field.get('value')?.errors?.['minlength']">Minimum length required:
+                      {{ field.get('value')?.errors?.['minlength']?.requiredLength }} characters.</small>
+                    <small *ngIf="field.get('value')?.errors?.['requiredTrue']">You must check at least 1 box to
+                      proceed.</small>
+                  </div>
+                  <select class="form-select mb-2">
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <!-- Add other options as needed -->
+                  </select>
 
-            <input
-              *ngSwitchCase="'password'"
-              type="password"
-              class="form-control"
-              formControlName="value"
-              placeholder="Enter password"
-            />
+                  <div class="form-check mt-2">
+                    <input type="checkbox" class="form-check-input" id="required-{{ rowIndex }}-{{ fieldIndex }}" />
+                    <label class="form-check-label" for="required-{{ rowIndex }}-{{ fieldIndex }}">Required</label>
+                  </div>
 
-            <input
-              *ngSwitchCase="'date'"
-              type="date"
-              class="form-control"
-              formControlName="value"
-            />
-
-            <!-- Checkbox -->
-            <div *ngSwitchCase="'checkbox'">
-              <div
-                *ngFor="let option of fields[fieldIndex]?.options; let i = index"
-                class="form-check"
-              >
-              <input
-              class="form-check-input"
-              type="checkbox"
-              id="checkbox{{ fieldIndex }}-{{ i }}"
-              [value]="option"
-              (change)="onCheckboxChange($event, fieldIndex)"
-              [checked]="additionalFields.at(fieldIndex).get('value')?.value.includes(option)"
-              [disabled]="previewForm.disabled"
-              *ngIf="additionalFields.at(fieldIndex).get('value') as checkboxControl"
-            />
-                <label
-                  class="form-check-label"
-                  [for]="'checkbox' + fieldIndex + '-' + i"
-                >
-                  {{ option }}
-                </label>
+                  <button class="btn btn-outline-danger btn-sm mt-2">Remove</button>
+                </div>
               </div>
             </div>
-
-
-            <!-- Radio -->
-            <div *ngSwitchCase="'radio'">
-              <div
-                *ngFor="let option of fields[fieldIndex]?.options; let i = index"
-                class="form-check"
-              >
-                <input
-                  class="form-check-input"
-                  type="radio"
-                  id="radio{{ fieldIndex }}-{{ i }}"
-                  [value]="option"
-                  formControlName="value"
-                />
-                <label
-                  class="form-check-label"
-                  [for]="'radio' + fieldIndex + '-' + i"
-                >
-                  {{ option }}
-                </label>
-              </div>
-            </div>
-          </ng-container>
-
-
-          <!-- Error Messages -->
-          <div
-            *ngIf="
-              field.get('value')?.touched &&
-              field.get('value')?.invalid
-            "
-            class="text-danger mt-2"
-          >
-            <small *ngIf="field.get('value')?.errors?.['required']">
-              This field is required.
-            </small>
-            <small *ngIf="field.get('value')?.errors?.['email']">
-              Please enter a valid email address.
-            </small>
-            <small *ngIf="field.get('value')?.errors?.['pattern']">
-              Only numeric values are allowed. it must be exactly 10 digits
-            </small>
-            <small *ngIf="field.get('value')?.errors?.['minlength']">
-              Minimum length required:
-              {{
-                field.get('value')?.errors?.['minlength']?.requiredLength
-              }}
-              characters.
-            </small>
-            <small *ngIf="field.get('value')?.errors?.['requiredTrue']">
-              You must check at least 1 box to proceed.
-            </small>
           </div>
         </div>
-      </div>
 
-      <!-- Submit Button -->
-      <div *ngIf="!prePopulatedFlag" class="d-flex justify-content-center col-12">
-        <button
-          type="button"
-          class="btn btn-primary px-5"
-          (click)="onSubmit()"
-        >
-          Submit
-        </button>
-      </div>
-      <div *ngIf="prePopulatedFlag && !editModeFlag" class="d-flex justify-content-center col-12">
-        <button
-          type="button"
-          class="btn btn-primary px-5"
-          (click)="toggleEditMode()"
-        >
-          Edit
-        </button>
-      </div>
-      <div *ngIf="editModeFlag" class="d-flex justify-content-center col-12">
-        <button
-          type="button"
-          class="btn btn-primary px-5"
-          (click)="updateFormResponse()"
-        >
-          Update
-        </button>
-      </div>
-      <div class="d-flex justify-content-center col-12">
-        <button
-          class="btn btn-primary "
-          (click)="saveAsPDF()"
-        >
-          Save PDF
-        </button>
-
-      </div>
-
-    </form>
+        <!-- Submit Button -->
+        <div *ngIf="!prePopulatedFlag" class="d-flex justify-content-center col-12">
+          <button type="button" class="btn btn-primary px-5" (click)="onSubmit()">Submit</button>
+        </div>
+        <div *ngIf="prePopulatedFlag && !editModeFlag" class="d-flex justify-content-center col-12">
+          <button type="button" class="btn btn-primary px-5" (click)="toggleEditMode()">Edit</button>
+        </div>
+        <div *ngIf="editModeFlag" class="d-flex justify-content-center col-12">
+          <button type="button" class="btn btn-primary px-5" (click)="updateFormResponse()">Update</button>
+        </div>
+        <div class="d-flex justify-content-center col-12">
+          <button class="btn btn-primary" (click)="saveAsPDF()">Save PDF</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
-
-</div>
-
+<!-- Preview Mode -->
 <div *ngIf="isPreviewMode" class="d-flex justify-content-center mt-4">
-  <div class="p-4  rounded bg-white w-75">
+  <div class="p-4 rounded bg-white w-75">
     <button class="btn btn-outline-primary mb-4" (click)="onBack()">
       <i class="bi bi-arrow-left"></i> Back
     </button>
