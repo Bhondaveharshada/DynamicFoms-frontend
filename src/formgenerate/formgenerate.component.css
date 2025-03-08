@@ -226,29 +226,41 @@ button.btn-primary:hover {
   }
 }
 
-/* Adjust col-md-6 to display three items per row */
-.col-md-4 {
-  flex: 0 0 33.33%;
-  /* Adjusted width */
-  max-width: 33.33%;
-  /* Adjusted width */
+/* NEW EQUAL WIDTH GRID SYSTEM - Replaces the fixed column widths */
+/* Make all fields in a row take equal width */
+.d-flex.flex-wrap > * {
+  flex: 1 1 0;
+  min-width: 200px; /* Minimum width before wrapping */
   padding: 0 0.5rem;
-  /* Added padding for spacing */
   box-sizing: border-box;
-  /* Added box-sizing to include padding in width calculation */
 }
 
-/* If you want a gap between the form fields */
+/* Override the col-md-4 class to use the flexible system */
+.col-md-4 {
+  flex: 1 1 0 !important;
+  max-width: none !important;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+/* Special case for single items - they should take full width */
+.d-flex.flex-wrap > :only-child {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+
+/* Responsive behavior for mobile */
+@media (max-width: 768px) {
+  .d-flex.flex-wrap > *,
+  .col-md-4 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Keep the original classes for reference but override their behavior */
 .row.g-4 {
   gap: 0.5rem;
-  /* Reduce the gap if needed */
-}
-
-@media (max-width: 768px) {
-  .col-md-4 {
-      flex: 0 0 100%;
-      max-width: 100%;
-  }
 }
 
 .form-field {
@@ -267,13 +279,6 @@ input.form-control,
 textarea.form-control,
 select.form-control {
   width: 100%;
-  /* Increased width */
-}
-
-/* Ensure the last field in a row takes full width */
-.d-flex.flex-wrap>:last-child:nth-child(3n+1) {
-  flex: 0 0 100%;
-  max-width: 100%;
 }
 
 /* Make the whole form responsive */
@@ -281,10 +286,5 @@ select.form-control {
   .form-preview {
       width: 95%;
       padding: 15px;
-  }
-
-  .col-md-4 {
-      flex: 0 0 100%;
-      max-width: 100%;
   }
 }

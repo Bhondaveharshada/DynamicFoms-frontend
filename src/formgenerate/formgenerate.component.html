@@ -12,7 +12,8 @@
           <div *ngFor="let row of additionalFields.controls; let rowIndex = index" [formGroupName]="rowIndex"
             class="mb-4 p-3 border rounded">
             <!-- Iterate over each field in the row -->
-            <div formArrayName="fields" class="d-flex flex-wrap">
+            <div formArrayName="fields" class="d-flex flex-wrap" 
+            [class.two-item-row]="getFields(rowIndex).controls.length === 2">
               <div *ngFor="let field of getFields(rowIndex).controls; let fieldIndex = index"
                 [formGroupName]="fieldIndex" class="col-md-4 mb-3">
                 <div class="form-field p-3 border rounded">

@@ -48,19 +48,19 @@ export class DragdropComponent {
     return [...this.additionalFields.map((_, index) => `field-list-${index}`), 'new-row-placeholder'];
   }
 
- // Add or update this method in your component
-getRowClass(row: any): string {
-  // Standard row class
-  let classes = 'form-row-container';
+ 
+  getRowClass(row: any): string {
+    let classes = 'form-row-container';
   
-  // Add single-item class if there's only one field
-  if (row.fields && row.fields.length === 1) {
-    classes += ' single-item';
+    if (row.fields && row.fields.length === 1) {
+      classes += ' single-item';
+    }
+    else if (row.fields && row.fields.length === 2) {
+      classes += ' two-items';
+    }
+    
+    return classes;
   }
-  
-  return classes;
-}
-
   
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
@@ -69,9 +69,8 @@ getRowClass(row: any): string {
     } else {
       const draggedFieldType = event.item.data;
       
-      // Check if we're dropping into the new row placeholder
       if (event.container.id === 'new-row-placeholder') {
-        // Create a new row with this field
+      
         this.additionalFields.push({
           fields: [{
             inputType: draggedFieldType,
@@ -81,14 +80,14 @@ getRowClass(row: any): string {
           }]
         });
       } else {
-        // Check if we're adding to an existing row by finding its index
+        
         const containerIdMatch = event.container.id.match(/field-list-(\d+)/);
         if (containerIdMatch) {
           const targetRowIndex = parseInt(containerIdMatch[1], 10);
           
-          // Ensure the row exists
+          
           if (targetRowIndex >= 0 && targetRowIndex < this.additionalFields.length) {
-            // Add the field to the existing row
+      
             this.additionalFields[targetRowIndex].fields.push({
               inputType: draggedFieldType,
               label: '',
@@ -99,7 +98,7 @@ getRowClass(row: any): string {
         }
       }
       this.updateRowClasses();
-      // Trigger change detection
+   
       this.cdr.detectChanges();
     }
   }

@@ -6,7 +6,8 @@
   <!-- Sidebar for draggable fields -->
   <div class="sidebar">
     <h2>Available Fields</h2>
-    <div id="all" cdkDropList [cdkDropListData]="all" [cdkDropListConnectedTo]="getFieldsListIds()" class="example-list" [cdkDropListEnterPredicate]="noReturnPredicate">
+    <div id="all" cdkDropList [cdkDropListData]="all" [cdkDropListConnectedTo]="getFieldsListIds()" class="example-list"
+      [cdkDropListEnterPredicate]="noReturnPredicate">
       <div class="example-box" *ngFor="let field of all" [cdkDragData]="field" cdkDrag>{{ field }}</div>
     </div>
   </div>
@@ -16,66 +17,65 @@
     <h1>Form</h1>
     <div class="mb-3">
       <label for="title" class="form-label fw-bold">Form Title</label>
-      <input type="text" id="title" name="title" class="form-control" [(ngModel)]="title" required placeholder="Enter form title" />
-      <div *ngIf="formSubmitted && (!title || title.trim() === '')" class="text-danger small">Form title is required.</div>
+      <input type="text" id="title" name="title" class="form-control" [(ngModel)]="title" required
+        placeholder="Enter form title" />
+      <div *ngIf="formSubmitted && (!title || title.trim() === '')" class="text-danger small">Form title is required.
+      </div>
     </div>
 
     <div>
       <div class="mb-2 text-muted small">Total rows: {{ additionalFields.length }}</div>
-     
-<!-- Form Rows -->
-<div *ngFor="let row of additionalFields; let rowIdx = index" class="form-row mb-3">
-  <div class="row-header d-flex justify-content-between align-items-center mb-2">
-    <span class="badge bg-secondary">Row {{ rowIdx + 1 }}</span>
-  </div>
-  
-  <div [id]="'field-list-' + rowIdx" 
-       cdkDropList 
-       [cdkDropListData]="row.fields" 
-       [cdkDropListConnectedTo]="['all']" 
-       [class]="getRowClass(row)" 
-       (cdkDropListDropped)="drop($event)"
-       class="row fields-row">
-    <!-- Use col-4 instead of col-md-4 to force 3 fields per row regardless of Bootstrap breakpoints -->
-    <div *ngFor="let field of row.fields; let fieldIdx = index" 
-         class="form-field-wrapper" 
-         [ngClass]="{'col-12': row.fields.length === 1, 'col-4': row.fields.length > 1}"
-         cdkDrag>
-      <div class="form-field p-3 border rounded mb-2">
-        <label for="label-{{ rowIdx }}-{{ fieldIdx }}">Label:</label>
-        <input id="label-{{ rowIdx }}-{{ fieldIdx }}" [(ngModel)]="field.label" type="text" class="form-control mb-2" placeholder="Enter label text" required />
-        <div *ngIf="formSubmitted && (!field.label || field.label.trim() === '')" class="text-danger small">Form title is required.</div>
-        
-        <select [(ngModel)]="field.inputType" (change)="onFieldTypeChange(rowIdx, fieldIdx, field.inputType)" class="form-select mb-2">
-          <option *ngFor="let inputType of all" [value]="inputType">{{ inputType }}</option>
-        </select>
-    
-        <div *ngIf="field.inputType === 'checkbox' || field.inputType === 'radio'" class="mt-2">
-          <div class="d-flex mb-2" *ngFor="let option of field.options; let j = index; trackBy: trackByIndex">
-            <input [(ngModel)]="field.options[j]" placeholder="Option {{ j + 1 }}" class="form-control me-2">
-            <button class="btn btn-outline-danger btn-sm" (click)="removeOption(rowIdx, fieldIdx, j)">Remove</button>
-            <div *ngIf="formSubmitted && (!field.options[j] || field.options[j].trim() === '')" class="text-danger small">Option text is required.</div>
-          </div>
-          <button (click)="addOption(rowIdx, fieldIdx)" class="btn btn-outline-info btn-sm">Add Option</button>
-        </div>
-    
-        <div class="form-check mt-2">
-          <input type="checkbox" class="form-check-input" id="required-{{ rowIdx }}-{{ fieldIdx }}" [(ngModel)]="field.required" />
-          <label class="form-check-label" for="required-{{ rowIdx }}-{{ fieldIdx }}">Required</label>
-        </div>
-    
-        <button class="btn btn-outline-danger btn-sm mt-2" (click)="removeField(rowIdx, fieldIdx)">Remove</button>
-      </div>
-    </div>
-  </div>
-  
-  <button class="btn btn-outline-primary btn-sm mt-2" (click)="addField(rowIdx)">Add Field to Row</button>
 
-</div>
-      <div id="new-row-placeholder" cdkDropList [cdkDropListData]="newRowPlaceholder" [cdkDropListConnectedTo]="['all']" class="new-row-drop-area" (cdkDropListDropped)="drop($event)">
+      <div *ngFor="let row of additionalFields; let rowIdx = index" [class]="getRowClass(row)">
+        <div class="row-header d-flex justify-content-between align-items-center mb-2">
+          <span class="badge bg-secondary">Row {{ rowIdx + 1 }}</span>
+        </div>
+      
+        <div [id]="'field-list-' + rowIdx" cdkDropList [cdkDropListData]="row.fields" [cdkDropListConnectedTo]="['all']"
+          (cdkDropListDropped)="drop($event)" class="row fields-row">
+          <div *ngFor="let field of row.fields; let fieldIdx = index" class="form-field-wrapper" cdkDrag>
+            <div class="form-field p-3 border rounded mb-2">
+              <label for="label-{{ rowIdx }}-{{ fieldIdx }}">Label:</label>
+              <input id="label-{{ rowIdx }}-{{ fieldIdx }}" [(ngModel)]="field.label" type="text"
+                class="form-control mb-2" placeholder="Enter label text" required />
+              <div *ngIf="formSubmitted && (!field.label || field.label.trim() === '')" class="text-danger small">Form
+                title is required.</div>
+
+              <select [(ngModel)]="field.inputType" (change)="onFieldTypeChange(rowIdx, fieldIdx, field.inputType)"
+                class="form-select mb-2">
+                <option *ngFor="let inputType of all" [value]="inputType">{{ inputType }}</option>
+              </select>
+
+              <div *ngIf="field.inputType === 'checkbox' || field.inputType === 'radio'" class="mt-2">
+                <div class="d-flex mb-2" *ngFor="let option of field.options; let j = index; trackBy: trackByIndex">
+                  <input [(ngModel)]="field.options[j]" placeholder="Option {{ j + 1 }}" class="form-control me-2">
+                  <button class="btn btn-outline-danger btn-sm"
+                    (click)="removeOption(rowIdx, fieldIdx, j)">Remove</button>
+                  <div *ngIf="formSubmitted && (!field.options[j] || field.options[j].trim() === '')"
+                    class="text-danger small">Option text is required.</div>
+                </div>
+                <button (click)="addOption(rowIdx, fieldIdx)" class="btn btn-outline-info btn-sm">Add Option</button>
+              </div>
+
+              <div class="form-check mt-2">
+                <input type="checkbox" class="form-check-input" id="required-{{ rowIdx }}-{{ fieldIdx }}"
+                  [(ngModel)]="field.required" />
+                <label class="form-check-label" for="required-{{ rowIdx }}-{{ fieldIdx }}">Required</label>
+              </div>
+
+              <button class="btn btn-outline-danger btn-sm mt-2" (click)="removeField(rowIdx, fieldIdx)">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-outline-primary btn-sm mt-2" (click)="addField(rowIdx)">Add Field to Row</button>
+
+      </div>
+      <div id="new-row-placeholder" cdkDropList [cdkDropListData]="newRowPlaceholder" [cdkDropListConnectedTo]="['all']"
+        class="new-row-drop-area" (cdkDropListDropped)="drop($event)">
         <div class="text-center py-2">Drop a field here to create a new row</div>
       </div>
-      
+
       <button class="btn btn-outline-primary mt-3" (click)="addNewRow()">Add New Row</button>
 
       <div *ngIf="formLink" class="mt-3">
@@ -97,7 +97,8 @@
 
       <div *ngIf="showPromptInput" class="mt-3">
         <textarea [(ngModel)]="prompt" rows="5" placeholder="Enter your prompt here..." class="form-control"></textarea>
-        <button class="btn btn-outline-primary mt-3" [disabled]="!prompt" (click)="processPrompt()">Submit Prompt</button>
+        <button class="btn btn-outline-primary mt-3" [disabled]="!prompt" (click)="processPrompt()">Submit
+          Prompt</button>
       </div>
     </div>
   </div>

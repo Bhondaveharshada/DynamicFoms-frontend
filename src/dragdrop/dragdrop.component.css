@@ -1,8 +1,8 @@
-/* Base container styles */
+
 html, body {
   height: 100%;
   margin: 0;
-  overflow: hidden; /* Prevent overall page scrolling */
+  overflow: hidden; 
 }
 
 .example-container {
@@ -12,8 +12,8 @@ html, body {
   padding: 16px;
   background: linear-gradient(135deg, #f8f9fc 0%, #f0f2f8 100%);
   font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  height: 100vh; /* Ensure container takes full height */
-  overflow: hidden; /* Prevent container from scrolling */
+  height: 100vh; 
+  overflow: hidden; 
 }
 
 @media (min-width: 768px) {
@@ -89,21 +89,7 @@ html, body {
   transition: all 0.3s ease;
 }
 
-/* Make sure the fields row container doesn't have conflicting styles */
-.fields-row {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-/* Override any Bootstrap grid defaults that might be limiting the layout */
-.fields-row>* {
-  padding: 0 10px;
-  box-sizing: border-box;
-}
-
+/* Responsive grid system for form fields */
 .form-row-container {
   display: flex;
   flex-wrap: wrap;
@@ -120,28 +106,53 @@ html, body {
   transition: all 0.3s ease;
 }
 
-/* Form field wrapper styles with direct width calculations */
+/* Base form field wrapper styling */
 .form-field-wrapper {
   padding: 5px;
   box-sizing: border-box;
   transition: all 0.3s ease;
-  width: 100%; /* Default to full width on smaller screens */
+  width: 100%; /* Default to full width on mobile */
 }
 
-/* This ensures three fields per row */
+/* Responsive grid layout */
 @media (min-width: 768px) {
+  /* Default: three fields per row */
   .form-field-wrapper {
-      width: calc(33.333% - 10px); /* Adjust for 3 columns with gap */
-      max-width: calc(33.333% - 10px);
-      flex: 0 0 calc(33.333% - 10px);
+    flex: 1 0 calc(33.333% - 11px);
+    max-width: calc(33.333% - 11px);
+  }
+  
+  /* Special handling for two fields (equal width) */
+  .form-row-container.two-items .form-field-wrapper {
+    flex: 1 0 calc(50% - 8px);
+    max-width: calc(50% - 8px);
+  }
+  
+  /* Single field takes full width */
+  .form-row-container.single-item .form-field-wrapper {
+    flex: 1 0 100%;
+    max-width: 100%;
   }
 }
 
-/* Ensure single fields take full width */
-.form-field-wrapper.col-12 {
-  width: 100% !important;
-  flex: 0 0 100% !important;
-  max-width: 100% !important;
+/* Mobile view - stack everything */
+@media (max-width: 767px) {
+  .form-field-wrapper {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+.form-field {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid #e9eef7;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
 }
 
 .form-builder {
@@ -150,12 +161,12 @@ html, body {
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
-  max-height: calc(100vh - 32px); /* Adjusted for top and bottom elements */
-  overflow-y: auto; /* Enable scrolling within the form builder */
+  max-height: calc(100vh - 32px); 
+  overflow-y: auto; 
   transition: all 0.3s ease;
   position: relative;
   flex-grow: 1;
-  background-color: #fff; /* Make the form background white */
+  background-color: #fff; 
 }
 
 @media (min-width: 768px) {
@@ -187,28 +198,6 @@ html, body {
 
 .form-builder h1 {
   margin-left: 40%;
-}
-
-/* Ensure the form field takes full width of its wrapper */
-.form-field {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  padding: 10px;
-  margin-bottom: 8px;
-  border: 1px solid #e9eef7;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
-}
-
-/* On smaller screens, stack the fields */
-@media (max-width: 767px) {
-  .form-field-wrapper {
-      width: 100% !important;
-      flex: 0 0 100% !important;
-      max-width: 100% !important;
-  }
 }
 
 .form-field select {
@@ -281,51 +270,43 @@ html, body {
   color: #5d76b0;
 }
 
-/* Adjust for larger screens (min-width: 768px) */
-@media (min-width: 768px) {
-  .form-field-wrapper {
-      flex: 1 1 calc(33.33% - 16px); /* Three fields per row */
-      max-width: calc(33.33% - 16px);
-  }
-
-  /* Special case: If only one item in the row, take full width */
-  .form-row-container.single-item .form-field-wrapper {
-      flex: 1 1 100%; /* Override to full width */
-      max-width: 100%;
-  }
-}
-
-/* dragdrop.component.css */
-
-/* Hide the sidebar on screens smaller than 768px (mobile) */
 @media (max-width: 767px) {
   .sidebar {
       display: none;
   }
 }
 
-/* The existing CSS for the sidebar remains unchanged for desktop view */
-.sidebar {
-  width: 100%;
-  border: none;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
-  background: linear-gradient(145deg, #ffffff, #f9fafd);
-  transition: all 0.3s ease;
-  position: relative;
-  /* Removed overflow-y and max-height from sidebar */
+.two-item-row .form-field-wrapper {
+  flex: 1 0 calc(50% - 8px) !important;
+  max-width: calc(50% - 8px) !important;
 }
 
+
 @media (min-width: 768px) {
-  .sidebar {
-      width: 25%;
+ 
+  .form-row-container .form-field-wrapper:nth-child(3n+4):nth-last-child(2),
+  .form-row-container .form-field-wrapper:nth-child(3n+5):last-child {
+    flex: 1 0 calc(50% - 8px);
+    max-width: calc(50% - 8px);
+  }
+  
+  .form-row-container .form-field-wrapper:nth-child(3n+4):last-child {
+    flex: 1 0 100%;
+    max-width: 100%;
   }
 }
 
-/* Make the last single field in a row take full width */
-.fields-row > .form-field-wrapper:last-child:nth-child(3n+1) {
-  width: 100% !important;
-  flex: 0 0 100% !important;
-  max-width: 100% !important;
+.fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  gap: 16px;
+}
+
+
+.fields-row>* {
+  padding: 0;
+  box-sizing: border-box;
 }
