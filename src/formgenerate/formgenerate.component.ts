@@ -220,7 +220,10 @@ export class FormgenerateComponent {
             icon: "success",
             title: "Form Submitted successfully"
           }).then(() => {
-            
+            if( this.previewForm) {
+            this.previewForm.disable();
+            this.prePopulatedFlag = true;
+            }
           })
           const id = res.result._id
           this.userFormData = this.processSubmittedData(fields, userform);
