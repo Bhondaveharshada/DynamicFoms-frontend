@@ -57,7 +57,7 @@ export class FormgenerateComponent {
     await this.fetchFormFields(id);
 
     this.fetchPatientData();
-  
+
     // Listen for changes in additionalFields to apply validators
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
       fields.forEach((field, index) => {
@@ -80,7 +80,6 @@ export class FormgenerateComponent {
 
         this.fields = response.result.additionalFields.map((field: any) => field);
 
-        console.log("Fields from backend:", this.fields);
         this.previewForm = this.fb.group({
           title: [this.formData.title, Validators.required],
           additionalFields: this.fb.array(
@@ -200,7 +199,6 @@ export class FormgenerateComponent {
                   icon: 'success',
                   confirmButtonText: 'OK'
                 });
-                console.log("Email sent", res);
 
               },
               error: (err) => {
@@ -222,18 +220,15 @@ export class FormgenerateComponent {
             icon: "success",
             title: "Form Submitted successfully"
           }).then(() => {
-            this.isPreviewMode = true
+            
           })
           const id = res.result._id
-          console.log("Id", id);
-          console.log("additionalfields from db", userform);
           this.userFormData = this.processSubmittedData(fields, userform);
 
         }, error: (err: any) => {
           console.log("errrorrr");
         }
       });
-      console.log("Submitted Form Data:", this.previewForm.value);
     } else {
       Swal.fire({
         title: 'Error!',
@@ -269,8 +264,6 @@ export class FormgenerateComponent {
           .subscribe({
             next: (response: any) => {
               if (response && response.result) {
-                console.log("filled response : ", response.result);
-                console.log("preview form : ", this.previewForm);
                 this.populateFormWithExistingData(response.result);
                 resolve(true);
               } else {
@@ -296,31 +289,43 @@ export class FormgenerateComponent {
 
     const additionalFieldsControl = this.previewForm.get('additionalFields') as FormArray;
 
-    existingData.additionalFields.forEach((existingField: any) => {
-      const matchingField = additionalFieldsControl.controls.find((control) => {
-        const controlValue = control.value;
-        return controlValue.inputType === existingField.inputType && controlValue.label === existingField.label;
+    existingData.additionalFields.forEach((existingFieldObject: any) => {
+      additionalFieldsControl.controls.forEach((fieldGroupControl) => {
+        const fieldsFormArray = fieldGroupControl.get('fields') as FormArray;
+
+        existingFieldObject.fields.forEach((existingField: any) => {
+
+
+          const matchingField = fieldsFormArray.controls.find((control) => {
+            const controlValue = control.value;
+            return controlValue.inputType === existingField.inputType && controlValue.label === existingField.label;
+          });
+
+          if (matchingField) {
+            const fieldFormGroup = matchingField as FormGroup;
+
+            if (existingField.inputType === 'checkbox') {
+              // For checkboxes, set the value as an array of selected options
+              fieldFormGroup.get('value')?.setValue(existingField.value);
+            } else if (existingField.inputType === 'radio') {
+              // For radio buttons, set the selected value
+              fieldFormGroup.get('value')?.setValue(existingField.value);
+            } else {
+              // For other input types, set the value directly
+              fieldFormGroup.get('value')?.setValue(existingField.value);
+            }
+          }
+        });
       });
-
-      if (matchingField) {
-        const fieldFormGroup = matchingField as FormGroup;
-
-        if (existingField.inputType === 'checkbox') {
-          // For checkboxes, set the value as an array of selected options
-          fieldFormGroup.get('value')?.setValue(existingField.value);
-        } else if (existingField.inputType === 'radio') {
-          // For radio buttons, set the selected value
-          fieldFormGroup.get('value')?.setValue(existingField.value);
-        } else {
-          // For other input types, set the value directly
-          fieldFormGroup.get('value')?.setValue(existingField.value);
-        }
-      }
     });
+
     this.previewForm.disable();
     this.editModeFlag = false;
     this.prePopulatedFlag = true;
   }
+
+
+
 
 
   // Add a method to enable editing
