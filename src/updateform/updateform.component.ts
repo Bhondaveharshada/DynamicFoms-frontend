@@ -1,23 +1,35 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Import ChangeDetectorRef
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormService } from '../services/form.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DragDropModule, moveItemInArray,CdkDragDrop } from '@angular/cdk/drag-drop';
+import { DragDropModule, moveItemInArray, CdkDragDrop } from '@angular/cdk/drag-drop';
+
+interface Field { 
+  inputType: string;
+  label: string;
+  required: boolean;
+  options: string[];
+}
+
+interface FormRow { 
+  fields: Field[];
+}
 
 @Component({
   selector: 'app-updateform',
-  imports: [CommonModule,RouterModule,FormsModule,DragDropModule,],
+  standalone: true, 
+  imports: [CommonModule, RouterModule, FormsModule, DragDropModule],
   templateUrl: './updateform.component.html',
   styleUrl: './updateform.component.css'
 })
 export class UpdateformComponent implements OnInit {
 
-  form_id :any
+  form_id: any;
   formUpdated = false;
+  title: string = '';
+  additionalFields: FormRow[] = []; 
 
-  title: string = '';            
-  additionalFields: { inputType: string, label: string, required: boolean, options: string[] }[] = [];
   all = [
     'text',
     'number',
@@ -29,122 +41,203 @@ export class UpdateformComponent implements OnInit {
     'textarea'
   ];
 
-  constructor(private activatedRoute : ActivatedRoute, private formService: FormService ){}
+  newRowPlaceholder: any[] = [];
+
+  constructor(
+    private activatedRoute: ActivatedRoute,
+    private formService: FormService,
+    private cdr: ChangeDetectorRef 
+  ) { }
 
   ngOnInit(): void {
     this.form_id = this.activatedRoute.snapshot.paramMap.get('id');
     console.log('Form ID:', this.form_id);
-    this.fetchFormFieldsDetails()
+    this.fetchFormFieldsDetails();
   }
 
-  fetchFormFieldsDetails(){
+  fetchFormFieldsDetails() {
     this.formService.getFormFields(this.form_id).subscribe({
-      next:(res:any)=>{
-        this.title = res.result.title; // Set the form title
-        this.additionalFields = res.result.additionalFields.map((field: any) => ({
-          inputType: field.inputType,
-          label: field.label,
-          required: field.isrequired,
-          options: field.options || [] // Default to an empty array if options are missing
+      next: (res: any) => {
+        this.title = res.result.title;
+        this.additionalFields = res.result.additionalFields.map((row: any) => ({
+          fields: row.fields.map((field: any) => ({
+            inputType: field.inputType,
+            label: field.label,
+            required: field.isrequired,
+            options: field.options || []
+          }))
         }));
-       
-        
-      },error :(err:any)=>{
-        console.error("error in fetching formfields",err);
-        
+        this.cdr.detectChanges(); 
+      },
+      error: (err: any) => {
+        console.error("error in fetching formfields", err);
       }
-        
-    })
+    });
   }
 
-    // Handle dropping the fields into the form
-    drop(event: CdkDragDrop<any[]>) {
-      if (event.previousContainer === event.container) {
-        moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-      } else {
-        // Add the selected field inputType to the additionalFields array with default values
-        this.additionalFields.push({ inputType: event.item.data, label: '', required: false, options: [] });
-      }
-    }
-   
-    
-    addField(): void {
-      this.additionalFields.push({
-        label: '',
-        inputType: 'text',
-        required: false,
-        options: [],
-    
-      });
-    }
+  getFieldsListIds(): string[] {
+    return [...this.additionalFields.map((_, index) => `field-list-${index}`), 'new-row-placeholder'];
+  }
 
-    removeField(index: number) {
-      this.additionalFields.splice(index, 1);
-    }
   
-  trackByIndex(index: number, item: any): number {
-    return index;
-  }
-
-  // Handle changing the field inputType
-  onFieldTypeChange(index: number, newType: string) {
-    this.additionalFields[index].inputType = newType;
+  getRowClass(row: any): any {
+    const count = row.fields?.length || 0;
+    
+    if (count === 1) {
+      return 'single-item';
+    } else if (count === 2) {
+      return 'two-items';
+    } else {
+      return ''; // Default styling for 3 or more items
+    }
   }
 
-  // Handle changing the label for a field
-  onLabelChange(index: number, newLabel: string) {
-    this.additionalFields[index].label = newLabel;
+  drop(event: CdkDragDrop<any[]>) {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+    } else {
+      const draggedFieldType = event.item.data;
+
+      if (event.container.id === 'new-row-placeholder') {
+        this.additionalFields.push({
+          fields: [{
+            inputType: draggedFieldType,
+            label: '',
+            required: false,
+            options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : []
+          }]
+        });
+      } else {
+        const containerIdMatch = event.container.id.match(/field-list-(\d+)/);
+        if (containerIdMatch) {
+          const targetRowIndex = parseInt(containerIdMatch[1], 10);
+
+          if (targetRowIndex >= 0 && targetRowIndex < this.additionalFields.length) {
+            this.additionalFields[targetRowIndex].fields.push({
+              inputType: draggedFieldType,
+              label: '',
+              required: false,
+              options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : []
+            });
+          }
+        }
+      }
+      this.cdr.detectChanges();
+    }
   }
 
-  // Handle changing the "required" checkbox
-  onRequiredChange(index: number, isRequired: boolean) {
-    this.additionalFields[index].required = isRequired;
+  addField(rowIndex: number) {
+    if (rowIndex >= 0 && rowIndex < this.additionalFields.length) {
+      const newField: Field = { inputType: 'text', label: '', required: false, options: [] };
+      this.additionalFields[rowIndex].fields.push(newField);
+      this.cdr.detectChanges();
+    }
+  }
+
+
+  addNewRow() {
+    const newField: Field = { inputType: 'text', label: '', required: false, options: [] };
+    const newRow: FormRow = { fields: [newField] };
+    this.additionalFields.push(newRow);
+    this.cdr.detectChanges();
+  }
+
+  
+  removeField(rowIdx: number, fieldIdx: number) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length) {
+      this.additionalFields[rowIdx].fields.splice(fieldIdx, 1);
+      
+      if (this.additionalFields[rowIdx].fields.length === 0) {
+        this.additionalFields.splice(rowIdx, 1);
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
+
+  onFieldTypeChange(rowIdx: number, fieldIdx: number, newType: string) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+      fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
+      this.additionalFields[rowIdx].fields[fieldIdx].inputType = newType;
+      
+      if (newType === 'checkbox' || newType === 'radio') {
+        this.additionalFields[rowIdx].fields[fieldIdx].options = [];
+      }
+    }
+  }
+
+  onLabelChange(rowIdx: number, fieldIdx: number, newLabel: string) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+      fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
+      this.additionalFields[rowIdx].fields[fieldIdx].label = newLabel;
+    }
+  }
+
+  onRequiredChange(rowIdx: number, fieldIdx: number, isRequired: boolean) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+      fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
+      this.additionalFields[rowIdx].fields[fieldIdx].required = isRequired;
+    }
+  }
+
+
+  addOption(rowIdx: number, fieldIdx: number) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+      fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
+      if (!this.additionalFields[rowIdx].fields[fieldIdx].options) {
+        this.additionalFields[rowIdx].fields[fieldIdx].options = [];
+      }
+      this.additionalFields[rowIdx].fields[fieldIdx].options.push('');
+      this.cdr.detectChanges();
+    }
+  }
+
+  removeOption(rowIdx: number, fieldIdx: number, optionIdx: number) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+      fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length &&
+      optionIdx >= 0 && optionIdx < this.additionalFields[rowIdx].fields[fieldIdx].options.length) {
+      this.additionalFields[rowIdx].fields[fieldIdx].options.splice(optionIdx, 1);
+      this.cdr.detectChanges();
+    }
   }
 
   noReturnPredicate() {
     return false;
   }
 
+  trackByIndex(index: number, item: any): number {
+    return index;
+  }
 
-addOption(index: number) {
-  this.additionalFields[index].options.push('');
-}
+  onUpdate(event: Event): void {
+    event.preventDefault();
 
-// Handle removing an option (for checkbox or radio fields)
-removeOption(index: number, optionIndex: number) {
-  this.additionalFields[index].options.splice(optionIndex, 1);
-}
+    const updatedForm = {
+      title: this.title,
+      additionalFields: this.additionalFields.map(row => ({ // Map rows
+        fields: row.fields.map(field => ({  // Map fields in each row
+          label: field.label,
+          inputType: field.inputType,
+          isrequired: field.required,
+          options: field.options
+        }))
+      }))
+    };
 
-onUpdate(event: Event): void {
-  const updatedForm = {
-    title: this.title,
-    additionalFields: this.additionalFields.map((field) => ({
-      label: field.label,
-      inputType: field.inputType,
-      isrequired: field.required,
-      options: field.options, 
+    this.formUpdated = true; 
+
    
-    
-    })),
-  };
-  this.formUpdated = true; // Set the flag to true to show the message
-  
-  // Hide the message after 3 seconds
-  setTimeout(() => {
-    this.formUpdated = false;
-  }, 3000);
+    setTimeout(() => {
+      this.formUpdated = false;
+    }, 3000);
 
-  this.formService.updateFormFields(this.form_id, updatedForm).subscribe({
-    next: (res: any) => {
-      console.log("Form updated successfully!", res);
-      
-    },
-    error: (err: any) => {
-      console.error("Error updating form", err);
-    }
-  });
-}
-
-
-
+    this.formService.updateFormFields(this.form_id, updatedForm).subscribe({
+      next: (res: any) => {
+        console.log("Form updated successfully!", res);
+      },
+      error: (err: any) => {
+        console.error("Error updating form", err);
+      }
+    });
+  }
 }

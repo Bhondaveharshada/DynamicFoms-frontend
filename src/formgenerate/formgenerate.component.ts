@@ -17,6 +17,7 @@ interface Field {
   _id: string;
 }
 
+
 @Component({
   selector: 'app-formgenerate',
   imports: [RouterModule, ReactiveFormsModule, CommonModule],
@@ -25,9 +26,6 @@ interface Field {
 })
 export class FormgenerateComponent {
   previewForm: FormGroup | null = null;
-
-
-  // Replace with the ObjectId you want to fetch
 
   userFormData: any;
   formData: any = null; // Static title and question
@@ -40,9 +38,9 @@ export class FormgenerateComponent {
   title = "";
   prePopulatedFlag = false;
   editModeFlag = false;
-  patientData: any ;
+  patientData: any;
 
-  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router, private patientService: PatientService, private emailService : EmailService) {
+  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router, private patientService: PatientService, private emailService: EmailService) {
 
   }
 
@@ -58,9 +56,8 @@ export class FormgenerateComponent {
 
     await this.fetchFormFields(id);
 
-    // Check if the form is already filled
-
     this.fetchPatientData();
+
     // Listen for changes in additionalFields to apply validators
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
       fields.forEach((field, index) => {
@@ -81,23 +78,27 @@ export class FormgenerateComponent {
       next: (response: any) => {
         this.formData = response.result;
 
-        // Use the unified 'options' field for both checkbox and radio inputs
         this.fields = response.result.additionalFields.map((field: any) => field);
 
-        console.log("Fields from backend:", this.fields);
         this.previewForm = this.fb.group({
           title: [this.formData.title, Validators.required],
           additionalFields: this.fb.array(
-            this.formData.additionalFields.map((field: any) =>
+            this.formData.additionalFields.map((row: any) =>
               this.fb.group({
-                label: [field.label, Validators.required],
-                value:
-                  field.inputType === 'checkbox'
-                    ? [Array.isArray(field.value) ? field.value : []] // Ensure value is an array for checkboxes
-                    : [field.value || '', this.getDynamicValidators(field)], // Default value for other types
-                inputType: [field.inputType, Validators.required],
-                isrequired: [field.isrequired],
-                options: [Array.isArray(field.options) ? field.options : []], // Ensure options are an array
+                fields: this.fb.array(
+                  row.fields.map((field: any) =>
+                    this.fb.group({
+                      label: [field.label, Validators.required],
+                      value:
+                        field.inputType === 'checkbox'
+                          ? [Array.isArray(field.value) ? field.value : []]
+                          : [field.value || '', this.getDynamicValidators(field)],
+                      inputType: [field.inputType, Validators.required],
+                      isrequired: [field.isrequired],
+                      options: [Array.isArray(field.options) ? field.options : []],
+                    })
+                  )
+                )
               })
             )
           ),
@@ -115,21 +116,16 @@ export class FormgenerateComponent {
     });
   }
 
-  onCheckboxChange(event: Event, fieldIndex: number): void {
-    const checkboxArray = this.additionalFields.at(fieldIndex).get('value') as FormControl;
+  onCheckboxChange(event: Event, rowIndex: number, fieldIndex: number): void {
+    const checkboxArray = this.getFields(rowIndex).at(fieldIndex).get('value') as FormControl;
     const value = (event.target as HTMLInputElement).value;
 
     if ((event.target as HTMLInputElement).checked) {
-      // Add the value to the checkbox array
       checkboxArray.setValue([...checkboxArray.value, value]);
     } else {
-      // Remove the value from the checkbox array
       checkboxArray.setValue(checkboxArray.value.filter((v: string) => v !== value));
     }
   }
-
-
-
 
 
   getValidators(inputType: string) {
@@ -164,16 +160,17 @@ export class FormgenerateComponent {
         case 'password':
           return [Validators.minLength(6)];
         default:
-          return []; // Default validator
+          return [];
       }
     }
   }
-
-  // Getter for additional fields
   get additionalFields(): FormArray {
     return this.previewForm?.get('additionalFields') as FormArray;
   }
 
+  getFields(rowIndex: number): FormArray {
+    return this.additionalFields.at(rowIndex).get('fields') as FormArray;
+  }
   onSubmit() {
     if (this.previewForm?.valid) {
       const formData = {
@@ -185,6 +182,8 @@ export class FormgenerateComponent {
 
       this.formService.addform(formData, this.formfieldId).subscribe({
         next: (res: any) => {
+
+          localStorage.setItem('needsDataRefresh', 'true');
           const fields = this.fields;
           const userform = res.result.additionalFields
           let payload = {
@@ -195,16 +194,25 @@ export class FormgenerateComponent {
           }
           this.emailService.sendEmail(payload).subscribe(
             {
-              next : (res) => {
+              next: (res) => {
                 Swal.fire({
                   title: 'Success!',
                   text: 'Email sent successfully!',
                   icon: 'success',
                   confirmButtonText: 'OK'
                 });
-                console.log("Email sent", res);
+                
+                const timestamp = new Date().getTime();
+                this.router.navigate(['/patient/datematrix'], {
+                  queryParams: {
+                    id: this.patientId,
+                    t: timestamp
+                  }
+                });
+
 
               },
+
               error: (err) => {
                 console.error("Error sending email", err);
               }
@@ -224,18 +232,20 @@ export class FormgenerateComponent {
             icon: "success",
             title: "Form Submitted successfully"
           }).then(() => {
-            this.isPreviewMode = true
+
+            if (this.previewForm) {
+              this.previewForm.disable();
+              this.prePopulatedFlag = true;
+            }
           })
           const id = res.result._id
-          console.log("Id", id);
-          console.log("additionalfields from db", userform);
           this.userFormData = this.processSubmittedData(fields, userform);
 
         }, error: (err: any) => {
           console.log("errrorrr");
         }
+
       });
-      console.log("Submitted Form Data:", this.previewForm.value);
     } else {
       Swal.fire({
         title: 'Error!',
@@ -252,6 +262,13 @@ export class FormgenerateComponent {
       this.patientId = params['patientId'];
     });
     this.router.navigate(['/patient/datematrix'], { queryParams: { id: this.patientId } });
+    // const timestamp = new Date().getTime();
+    // this.router.navigate(['/patient/datematrix'], {
+    //   queryParams: {
+    //     id: this.patientId,
+    //     t: timestamp
+    //   }
+    // });
   }
 
 
@@ -271,8 +288,6 @@ export class FormgenerateComponent {
           .subscribe({
             next: (response: any) => {
               if (response && response.result) {
-                console.log("filled response : ", response.result);
-                console.log("preview form : ", this.previewForm);
                 this.populateFormWithExistingData(response.result);
                 resolve(true);
               } else {
@@ -298,31 +313,43 @@ export class FormgenerateComponent {
 
     const additionalFieldsControl = this.previewForm.get('additionalFields') as FormArray;
 
-    existingData.additionalFields.forEach((existingField: any) => {
-      const matchingField = additionalFieldsControl.controls.find((control) => {
-        const controlValue = control.value;
-        return controlValue.inputType === existingField.inputType && controlValue.label === existingField.label;
+    existingData.additionalFields.forEach((existingFieldObject: any) => {
+      additionalFieldsControl.controls.forEach((fieldGroupControl) => {
+        const fieldsFormArray = fieldGroupControl.get('fields') as FormArray;
+
+        existingFieldObject.fields.forEach((existingField: any) => {
+
+
+          const matchingField = fieldsFormArray.controls.find((control) => {
+            const controlValue = control.value;
+            return controlValue.inputType === existingField.inputType && controlValue.label === existingField.label;
+          });
+
+          if (matchingField) {
+            const fieldFormGroup = matchingField as FormGroup;
+
+            if (existingField.inputType === 'checkbox') {
+              // For checkboxes, set the value as an array of selected options
+              fieldFormGroup.get('value')?.setValue(existingField.value);
+            } else if (existingField.inputType === 'radio') {
+              // For radio buttons, set the selected value
+              fieldFormGroup.get('value')?.setValue(existingField.value);
+            } else {
+              // For other input types, set the value directly
+              fieldFormGroup.get('value')?.setValue(existingField.value);
+            }
+          }
+        });
       });
-
-      if (matchingField) {
-        const fieldFormGroup = matchingField as FormGroup;
-
-        if (existingField.inputType === 'checkbox') {
-          // For checkboxes, set the value as an array of selected options
-          fieldFormGroup.get('value')?.setValue(existingField.value);
-        } else if (existingField.inputType === 'radio') {
-          // For radio buttons, set the selected value
-          fieldFormGroup.get('value')?.setValue(existingField.value);
-        } else {
-          // For other input types, set the value directly
-          fieldFormGroup.get('value')?.setValue(existingField.value);
-        }
-      }
     });
+
     this.previewForm.disable();
     this.editModeFlag = false;
     this.prePopulatedFlag = true;
   }
+
+
+
 
 
   // Add a method to enable editing
@@ -468,10 +495,10 @@ export class FormgenerateComponent {
         }
 
         // Save the PDF
-        if(this.patientData){
-          pdf.save(this.patientData.id+"_"+this.patientData.name+"_"+this.formData.title+'.pdf');
+        if (this.patientData) {
+          pdf.save(this.patientData.id + "_" + this.patientData.name + "_" + this.formData.title + '.pdf');
         } else {
-          pdf.save(this.formData.title+'.pdf');
+          pdf.save(this.formData.title + '.pdf');
         }
       })
       .catch((error) => {
@@ -490,8 +517,8 @@ export class FormgenerateComponent {
       });
   }
 
-  fetchPatientData(){
-    if(this.patientId){
+  fetchPatientData() {
+    if (this.patientId) {
       this.patientService.getPatientById(this.patientId).subscribe({
         next: (response) => {
           console.log("patinent data : ", response);

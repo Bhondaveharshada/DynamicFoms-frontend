@@ -34,11 +34,9 @@ export class FormService {
     return this.http.get(`${environment.api}/getUserForm/${id}`)
   }
 
-  addFormFields(data:any, formId:any){
-    const {title,addformfields} = data
-    console.log("data from service  ",data);
-
-    return this.http.post(`${environment.api}/addformfields`, {data,formId});
+  addFormFields(data: any, formId: any) {
+    console.log("Sending to API:", { data, formId });
+    return this.http.post(`${environment.api}/addformfields`, { data, formId });
   }
 
   getFormFields(id:any)

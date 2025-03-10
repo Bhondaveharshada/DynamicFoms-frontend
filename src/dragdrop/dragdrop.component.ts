@@ -1,166 +1,203 @@
-import { Component } from '@angular/core';
-import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { Component, ChangeDetectorRef } from '@angular/core';
+import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { RouterModule } from '@angular/router';
-import { CommonModule, formatCurrency } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormService } from '../services/form.service';
 import { OpenaiService } from '../app/openai/openai.service';
 import Swal from 'sweetalert2';
 
+interface Field {
+  inputType: string;
+  label: string;
+  required: boolean;
+  options: string[];
+}
+
+interface FormRow {
+  fields: Field[];
+}
+
 @Component({
   selector: 'app-dragdrop',
-  imports: [RouterModule, DragDropModule, CommonModule, FormsModule],
+  standalone: true,
+  imports: [RouterModule, CommonModule, FormsModule, DragDropModule],
   templateUrl: './dragdrop.component.html',
   styleUrl: './dragdrop.component.css'
 })
 export class DragdropComponent {
+  constructor(private formService: FormService, private openaiService: OpenaiService, private cdr: ChangeDetectorRef) { }
 
-  constructor(private formService: FormService, private openaiService: OpenaiService) { }
-  // live:string = 'https://forms-beta-red.vercel.app/'
-  title: string = ''
-  all = [
-    'text',
-    'number',
-    'email',
-    'password',
-    'date',
-    'checkbox',
-    'radio',
-    'textarea'
-  ];
-
-  formLink: any = '';
-  formFields: any[] = [];
-  _id: any
+  title: string = '';
+  formLink: string | null = null;
+  _id: any;
   isLinkSaved = false;
-  additionalFields: { inputType: string, label: string, required: boolean, options: string[] }[] = [];
-  showPromptInput: boolean = false;
-  prompt: string = '';
-  promptResponse: string = '';
-  // Handle dropping the fields into the form
+  showPromptInput = false;
+  prompt = '';
+  promptResponse = '';
+  formFields: any[] = [];
+  formSubmitted: boolean = false; 
+
+  all = ['text', 'number', 'email', 'password', 'date', 'checkbox', 'radio', 'textarea'];
+
+  additionalFields: FormRow[] = [];
+  
+  newRowPlaceholder: any[] = [];
+
+  getFieldsListIds(): string[] {
+    return [...this.additionalFields.map((_, index) => `field-list-${index}`), 'new-row-placeholder'];
+  }
+
+ 
+  getRowClass(row: any): string {
+    let classes = 'form-row-container';
+  
+    if (row.fields && row.fields.length === 1) {
+      classes += ' single-item';
+    }
+    else if (row.fields && row.fields.length === 2) {
+      classes += ' two-items';
+    }
+    
+    return classes;
+  }
+  
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
+     
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
-      // Add the selected field inputType to the additionalFields array with default values
-      this.additionalFields.push({ inputType: event.item.data, label: '', required: false, options: [] });
-    }
-  }
-
-  processPrompt(): void {
-    if (!this.prompt) return;
-
-    let prompt = `I have specified the fields I want in my form. ` + this.prompt + ` Please generate a complete and valid JSON structure for the form based on the following requirements and example structure:
-
-  Requirements:
-
-  Include all the fields I mentioned in the input prompt.
-  Each field should have the following properties:
-  label: The text label for the field.
-  inputType: The type of input (e.g., text, date, radio, etc.).
-  isrequired: A boolean indicating if the field is mandatory.
-  options: An array of options, if applicable (e.g., for radio buttons or checkboxes).
-  Example JSON Structure:
-  "additionalFields": [
-    {
-      "label": "Date:",
-      "inputType": "date",
-      "isrequired": false,
-      "options": []
-    },
-    {
-      "label": "Have there been any new Adverse Events since the last visit?",
-      "inputType": "radio",
-      "isrequired": false,
-      "options": ["yes", "no"]
-    }
-  ]
-  Please ensure that the response is formatted as a proper JSON object and matches the example structure. Only include fields that are relevant to the provided input.
-  the json objects should be properly closed at end
-  `;
-
-    console.log("Prompt: ", prompt);
-
-    // Show SweetAlert loader
-    Swal.fire({
-      title: 'Processing...',
-      text: 'Generating JSON structure, please wait.',
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      didOpen: () => {
-        Swal.showLoading(); // Show loading spinner
-      }
-    });
-
-    this.openaiService.generateResponse(prompt).subscribe({
-      next: (res) => {
-        Swal.close(); // Close SweetAlert loader
-        this.promptResponse = res.choices[0].message.content;
-        console.log("Prompt Response: ", this.promptResponse);
-        this.additionalFields = JSON.parse(this.promptResponse).additionalFields;
-      },
-      error: (err) => {
-        Swal.close(); // Close SweetAlert loader
-        console.error('Error processing prompt:', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'An error occurred while processing the prompt. Please try again.',
+      const draggedFieldType = event.item.data;
+      
+      if (event.container.id === 'new-row-placeholder') {
+      
+        this.additionalFields.push({
+          fields: [{
+            inputType: draggedFieldType,
+            label: '',
+            required: false,
+            options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : []
+          }]
         });
+      } else {
+        
+        const containerIdMatch = event.container.id.match(/field-list-(\d+)/);
+        if (containerIdMatch) {
+          const targetRowIndex = parseInt(containerIdMatch[1], 10);
+          
+          
+          if (targetRowIndex >= 0 && targetRowIndex < this.additionalFields.length) {
+      
+            this.additionalFields[targetRowIndex].fields.push({
+              inputType: draggedFieldType,
+              label: '',
+              required: false,
+              options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : []
+            });
+          }
+        }
       }
-    });
+      this.updateRowClasses();
+   
+      this.cdr.detectChanges();
+    }
   }
 
-  addField(): void {
-    this.additionalFields.push({
-      label: '',
-      inputType: 'text',
-      required: false,
-      options: [],
-
-    });
+    updateRowClasses() {
+      this.additionalFields.forEach(row => {
+          if (row.fields.length === 1) {
+             
+          } else {
+              // row.classList.remove('single-item');
+          }
+      });
   }
 
-
-  trackByIndex(index: number, item: any): number {
-    return index;
+  /** Adds a New Field */
+  addField(rowIndex: number) {
+    if (rowIndex >= 0 && rowIndex < this.additionalFields.length) {
+      const newField: Field = { inputType: 'text', label: '', required: false, options: [] };
+      this.additionalFields[rowIndex].fields.push(newField);
+      this.cdr.detectChanges();
+    }
+    this.updateRowClasses();
   }
 
-  // Handle changing the field inputType
-  onFieldTypeChange(index: number, newType: string) {
-    this.additionalFields[index].inputType = newType;
+  /** Adds a new row with one default field */
+  addNewRow() {
+    const newField: Field = { inputType: 'text', label: '', required: false, options: [] };
+    const newRow: FormRow = { fields: [newField] };
+    this.additionalFields.push(newRow);
+    this.cdr.detectChanges();
+    
+    // For debugging
+    console.log('Added new row. Total rows:', this.additionalFields.length);
+    console.log('New row structure:', JSON.stringify(newRow));
   }
 
-  // Handle changing the label for a field
-  onLabelChange(index: number, newLabel: string) {
-    this.additionalFields[index].label = newLabel;
+  /** Removes a Specific Field */
+  removeField(rowIdx: number, fieldIdx: number) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length) {
+      this.additionalFields[rowIdx].fields.splice(fieldIdx, 1);
+      // Remove the row if it's empty
+      if (this.additionalFields[rowIdx].fields.length === 0) {
+        this.additionalFields.splice(rowIdx, 1);
+      }
+      this.cdr.detectChanges();
+    }
+    this.updateRowClasses();
   }
 
-  // Handle changing the "required" checkbox
-  onRequiredChange(index: number, isRequired: boolean) {
-    this.additionalFields[index].required = isRequired;
+  /** Handles Field Type Change */
+  onFieldTypeChange(rowIdx: number, fieldIdx: number, newType: string) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+        fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
+      this.additionalFields[rowIdx].fields[fieldIdx].inputType = newType;
+      // Initialize options array for checkbox/radio
+      if (newType === 'checkbox' || newType === 'radio') {
+        this.additionalFields[rowIdx].fields[fieldIdx].options = [];
+      }
+    }
   }
 
-  // Handle adding an option (for checkbox or radio fields)
-  addOption(index: number) {
-    this.additionalFields[index].options.push('');
+  /** Handles Label Change */
+  onLabelChange(rowIdx: number, fieldIdx: number, newLabel: string) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+        fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
+      this.additionalFields[rowIdx].fields[fieldIdx].label = newLabel;
+    }
   }
 
-  // Handle removing an option (for checkbox or radio fields)
-  removeOption(index: number, optionIndex: number) {
-    this.additionalFields[index].options.splice(optionIndex, 1);
+  /** Handles Required Checkbox */
+  onRequiredChange(rowIdx: number, fieldIdx: number, isRequired: boolean) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+        fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
+      this.additionalFields[rowIdx].fields[fieldIdx].required = isRequired;
+    }
   }
 
-  // Handle removing a field
-  removeField(index: number) {
-    this.additionalFields.splice(index, 1);
+  /** Adds an Option (for Checkbox/Radio Fields) */
+  addOption(rowIdx: number, fieldIdx: number) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+        fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
+      if (!this.additionalFields[rowIdx].fields[fieldIdx].options) {
+        this.additionalFields[rowIdx].fields[fieldIdx].options = [];
+      }
+      this.additionalFields[rowIdx].fields[fieldIdx].options.push('');
+    }
   }
 
-  noReturnPredicate() {
-    return false;
+  /** Removes an Option */
+  removeOption(rowIdx: number, fieldIdx: number, optionIdx: number) {
+    if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
+        fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length &&
+        optionIdx >= 0 && optionIdx < this.additionalFields[rowIdx].fields[fieldIdx].options.length) {
+      this.additionalFields[rowIdx].fields[fieldIdx].options.splice(optionIdx, 1);
+    }
   }
 
-  fetchForms(): void {
+  /** Fetch All Forms */
+  fetchForms() {
     this.formService.getAllFormFields().subscribe({
       next: (res: any) => {
         this.formFields = res.result || [];
@@ -170,57 +207,184 @@ export class DragdropComponent {
     });
   }
 
-  onSave(event: Event): void {
-    event.preventDefault(); // Prevent the default form submission behavior
+  onSave(event: Event) {
+    event.preventDefault();
+    this.formSubmitted = true; 
+  
+    // Validate fields
+    let isValid = true;
+    const validationMessages: string[] = [];
+  
+    // this.additionalFields.forEach((row, rowIdx) => {
+    //   row.fields.forEach((field, fieldIdx) => {
+        
+    //     if (!field.label || field.label.trim() === '') {
+    //       isValid = false;
+    //       validationMessages.push(`Row ${rowIdx + 1}, Field ${fieldIdx + 1}: Label is required.`);
+    //     }... //     if ((field.inputType === 'checkbox' || field.inputType === 'radio') && field.options.length > 0) {
+    //       field.options.forEach((option, optionIdx) => {
+    //         if (!option || option.trim() === '') {
+    //           isValid = false;
+    //           validationMessages.push(`Row ${rowIdx + 1}, Field ${fieldIdx + 1}, Option ${optionIdx + 1}: Option text is required.`);
+    //         }
+    //       });
+    //     }
+    //   });
+    // });
+  
+    // If validation fails, show error messages
+    if (!isValid) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Validation Error', 
+        html: validationMessages.join('<br>') 
+      });
+      return;
+    }
+  
+    // If validation passes, proceed to save the form
     const formData = {
       title: this.title,
-      additionalFields: this.additionalFields.map((field) => ({
-        label: field.label,
-        inputType: field.inputType,
-        isrequired: field.required,
-        options: field.options || null,
-
-      })),
+      additionalFields: this.additionalFields.map(row => ({
+        fields: row.fields.map(field => ({
+          label: field.label || 'Untitled',
+          inputType: field.inputType,
+          isrequired: field.required,
+          options: field.options || []
+        }))
+      }))
     };
-
+  
+    // Log the exact data being sent to the server
+    console.log("Sending form data structure:", JSON.stringify(formData, null, 2));
+  
     const formId = new Date().getTime();
+  
+    // Show loading indicator
+    Swal.fire({ 
+      title: 'Saving...', 
+      text: 'Please wait', 
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading() 
+    });
+  
     this.formService.addFormFields(formData, formId).subscribe({
       next: (res: any) => {
-
+        Swal.close();
+        console.log('Form saved successfully:', res);
         const id = res.result._id;
         this._id = id;
         this.formLink = `${window.location.origin}/form/${id}/${formId}`;
-        console.log('formlink form onsave fun', typeof this.formLink, this.formLink);
-        const stringLink = `${this.formLink}`;
-        console.log('String link', String(stringLink));
-        /*  this.notyf.open({ type: 'success', message: 'Form submitted successfully!' }); */
+        Swal.fire({ icon: 'success', title: 'Success', text: 'Form saved successfully!' });
         this.saveLink();
         this.fetchForms();
-
       },
-      error: (err: any) => console.error('Error saving form:', err),
+      error: (err: any) => {
+        Swal.close();
+        // console.error('Error saving form (full details):', err);
+        let errorMessage = 'An unknown error occurred';
+        if (err.error && err.error.message) {
+          errorMessage = err.error.message;
+        }
+        Swal.fire({ 
+          icon: 'error', 
+          title: 'Error', 
+          text: `Failed to save form: ${errorMessage}` 
+        });
+      },
     });
   }
 
-
+  
   saveLink() {
-    if (this.formLink) {
-      if (this.isLinkSaved) return;
-
-      this.formService.saveFormLink(this._id, this.formLink).subscribe({
-        next: (res: any) => {
-          this.isLinkSaved = true;
-          console.log('Link saved successfully', res.result);
-        },
-        error: (err: any) => console.error('Error saving link:', err),
-      });
+    if (!this.formLink || !this._id) {
+      console.error('Missing form link or ID');
+      return;
     }
+  
+    // Show loading indicator
+    const savingToast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false
+    });
+    savingToast.fire({ title: 'Saving link...', icon: 'info' });
+  
+    this.formService.saveFormLink(this._id, this.formLink).subscribe({
+      next: (res: any) => {
+        this.isLinkSaved = true;
+        console.log('Link saved successfully:', res);
+        savingToast.close();
+        
+        // Show success toast
+        Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        }).fire({ title: 'Link saved successfully!', icon: 'success' });
+      },
+      error: (err: any) => {
+        console.error('Error saving link:', err);
+        savingToast.close();
+        
+        // Show error toast
+        Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        }).fire({ title: 'Failed to save link', icon: 'error' });
+      },
+    });
   }
 
-  resetForm(): void {
+  /** Processes AI Prompt */
+  processPrompt() {
+    if (!this.prompt) return;
+
+    let prompt = `I have specified the fields I want in my form. ` + this.prompt + ` Generate a valid JSON structure for the form.`;
+
+    Swal.fire({ title: 'Processing...', text: 'Generating JSON structure, please wait.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    this.openaiService.generateResponse(prompt).subscribe({
+      next: (res) => {
+        Swal.close();
+        this.promptResponse = res.choices[0].message.content;
+        try {
+          const parsedResponse = JSON.parse(this.promptResponse);
+          if (parsedResponse && parsedResponse.additionalFields) {
+            this.additionalFields = parsedResponse.additionalFields;
+            this.cdr.detectChanges();
+          } else {
+            throw new Error('Invalid response format');
+          }
+        } catch (error) {
+          console.error('Error parsing prompt response:', error);
+          Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to parse the generated JSON structure.' });
+        }
+      },
+      error: (err) => {
+        Swal.close();
+        console.error('Error processing prompt:', err);
+        Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred while processing the prompt.' });
+      }
+    });
+  }
+
+  /** Resets the Form */
+  resetForm() {
     this.title = '';
     this.additionalFields = [];
     this.formLink = null;
+    this.cdr.detectChanges();
+  }
 
+  trackByIndex(index: number, item: any): number {
+    return index;
+  }
+
+  noReturnPredicate() {
+    return false;
   }
 }
