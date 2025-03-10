@@ -38,9 +38,9 @@ export class FormgenerateComponent {
   title = "";
   prePopulatedFlag = false;
   editModeFlag = false;
-  patientData: any ;
+  patientData: any;
 
-  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router, private patientService: PatientService, private emailService : EmailService) {
+  constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router, private patientService: PatientService, private emailService: EmailService) {
 
   }
 
@@ -160,7 +160,7 @@ export class FormgenerateComponent {
         case 'password':
           return [Validators.minLength(6)];
         default:
-          return []; // Default validator
+          return [];
       }
     }
   }
@@ -182,6 +182,8 @@ export class FormgenerateComponent {
 
       this.formService.addform(formData, this.formfieldId).subscribe({
         next: (res: any) => {
+
+          localStorage.setItem('needsDataRefresh', 'true');
           const fields = this.fields;
           const userform = res.result.additionalFields
           let payload = {
@@ -192,15 +194,25 @@ export class FormgenerateComponent {
           }
           this.emailService.sendEmail(payload).subscribe(
             {
-              next : (res) => {
+              next: (res) => {
                 Swal.fire({
                   title: 'Success!',
                   text: 'Email sent successfully!',
                   icon: 'success',
                   confirmButtonText: 'OK'
                 });
+                
+                const timestamp = new Date().getTime();
+                this.router.navigate(['/patient/datematrix'], {
+                  queryParams: {
+                    id: this.patientId,
+                    t: timestamp
+                  }
+                });
+
 
               },
+
               error: (err) => {
                 console.error("Error sending email", err);
               }
@@ -220,9 +232,10 @@ export class FormgenerateComponent {
             icon: "success",
             title: "Form Submitted successfully"
           }).then(() => {
-            if( this.previewForm) {
-            this.previewForm.disable();
-            this.prePopulatedFlag = true;
+
+            if (this.previewForm) {
+              this.previewForm.disable();
+              this.prePopulatedFlag = true;
             }
           })
           const id = res.result._id
@@ -231,6 +244,7 @@ export class FormgenerateComponent {
         }, error: (err: any) => {
           console.log("errrorrr");
         }
+
       });
     } else {
       Swal.fire({
@@ -248,6 +262,13 @@ export class FormgenerateComponent {
       this.patientId = params['patientId'];
     });
     this.router.navigate(['/patient/datematrix'], { queryParams: { id: this.patientId } });
+    // const timestamp = new Date().getTime();
+    // this.router.navigate(['/patient/datematrix'], {
+    //   queryParams: {
+    //     id: this.patientId,
+    //     t: timestamp
+    //   }
+    // });
   }
 
 
@@ -474,10 +495,10 @@ export class FormgenerateComponent {
         }
 
         // Save the PDF
-        if(this.patientData){
-          pdf.save(this.patientData.id+"_"+this.patientData.name+"_"+this.formData.title+'.pdf');
+        if (this.patientData) {
+          pdf.save(this.patientData.id + "_" + this.patientData.name + "_" + this.formData.title + '.pdf');
         } else {
-          pdf.save(this.formData.title+'.pdf');
+          pdf.save(this.formData.title + '.pdf');
         }
       })
       .catch((error) => {
@@ -496,8 +517,8 @@ export class FormgenerateComponent {
       });
   }
 
-  fetchPatientData(){
-    if(this.patientId){
+  fetchPatientData() {
+    if (this.patientId) {
       this.patientService.getPatientById(this.patientId).subscribe({
         next: (response) => {
           console.log("patinent data : ", response);
