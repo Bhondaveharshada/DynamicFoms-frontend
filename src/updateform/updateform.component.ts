@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Import ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormService } from '../services/form.service';
 import { CommonModule } from '@angular/common';
@@ -6,10 +6,12 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule, moveItemInArray, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 interface Field { 
+  id?: string;      // Add the ID field
   inputType: string;
   label: string;
   required: boolean;
   options: string[];
+  allowMultipleSelection?: boolean;
 }
 
 interface FormRow { 
@@ -38,6 +40,7 @@ export class UpdateformComponent implements OnInit {
     'date',
     'checkbox',
     'radio',
+    'dropdown',
     'textarea'
   ];
 
@@ -55,31 +58,37 @@ export class UpdateformComponent implements OnInit {
     this.fetchFormFieldsDetails();
   }
 
-  fetchFormFieldsDetails() {
-    this.formService.getFormFields(this.form_id).subscribe({
-      next: (res: any) => {
-        this.title = res.result.title;
-        this.additionalFields = res.result.additionalFields.map((row: any) => ({
-          fields: row.fields.map((field: any) => ({
-            inputType: field.inputType,
-            label: field.label,
-            required: field.isrequired,
-            options: field.options || []
-          }))
-        }));
-        this.cdr.detectChanges(); 
-      },
-      error: (err: any) => {
-        console.error("error in fetching formfields", err);
-      }
-    });
-  }
+  
+generateUniqueId(): string {
+  return 'field_' + new Date().getTime() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+fetchFormFieldsDetails() {
+  this.formService.getFormFields(this.form_id).subscribe({
+    next: (res: any) => {
+      this.title = res.result.title;
+      this.additionalFields = res.result.additionalFields.map((row: any) => ({
+        fields: row.fields.map((field: any) => ({
+          id: field.id || this.generateUniqueId(), // Use existing ID or generate new one
+          inputType: field.inputType,
+          label: field.label,
+          required: field.isrequired,
+          options: field.options || [],
+          allowMultipleSelection: field.inputType === 'dropdown' ? field.allowMultipleSelection || false : undefined
+        }))
+      }));
+      this.cdr.detectChanges();
+    },
+    error: (err: any) => {
+      console.error("error in fetching formfields", err);
+    }
+  });
+}
 
   getFieldsListIds(): string[] {
     return [...this.additionalFields.map((_, index) => `field-list-${index}`), 'new-row-placeholder'];
   }
 
-  
   getRowClass(row: any): any {
     const count = row.fields?.length || 0;
     
@@ -91,33 +100,36 @@ export class UpdateformComponent implements OnInit {
       return ''; // Default styling for 3 or more items
     }
   }
-
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       const draggedFieldType = event.item.data;
-
+  
       if (event.container.id === 'new-row-placeholder') {
         this.additionalFields.push({
           fields: [{
+            id: this.generateUniqueId(),  // Add ID
             inputType: draggedFieldType,
             label: '',
             required: false,
-            options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : []
+            options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' || draggedFieldType === 'dropdown' ? [] : [],
+            allowMultipleSelection: draggedFieldType === 'dropdown' ? false : undefined
           }]
         });
       } else {
         const containerIdMatch = event.container.id.match(/field-list-(\d+)/);
         if (containerIdMatch) {
           const targetRowIndex = parseInt(containerIdMatch[1], 10);
-
+  
           if (targetRowIndex >= 0 && targetRowIndex < this.additionalFields.length) {
             this.additionalFields[targetRowIndex].fields.push({
+              id: this.generateUniqueId(),  // Add ID
               inputType: draggedFieldType,
               label: '',
               required: false,
-              options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : []
+              options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' || draggedFieldType === 'dropdown' ? [] : [],
+              allowMultipleSelection: draggedFieldType === 'dropdown' ? false : undefined
             });
           }
         }
@@ -128,21 +140,33 @@ export class UpdateformComponent implements OnInit {
 
   addField(rowIndex: number) {
     if (rowIndex >= 0 && rowIndex < this.additionalFields.length) {
-      const newField: Field = { inputType: 'text', label: '', required: false, options: [] };
+      const newField: Field = { 
+        id: this.generateUniqueId(),  // Add ID to new fields
+        inputType: 'text', 
+        label: '', 
+        required: false, 
+        options: [],
+        allowMultipleSelection: false
+      };
       this.additionalFields[rowIndex].fields.push(newField);
       this.cdr.detectChanges();
     }
   }
-
-
+  
   addNewRow() {
-    const newField: Field = { inputType: 'text', label: '', required: false, options: [] };
+    const newField: Field = { 
+      id: this.generateUniqueId(),  // Add ID to new fields
+      inputType: 'text', 
+      label: '', 
+      required: false, 
+      options: [],
+      allowMultipleSelection: false
+    };
     const newRow: FormRow = { fields: [newField] };
     this.additionalFields.push(newRow);
     this.cdr.detectChanges();
   }
 
-  
   removeField(rowIdx: number, fieldIdx: number) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length) {
       this.additionalFields[rowIdx].fields.splice(fieldIdx, 1);
@@ -154,14 +178,20 @@ export class UpdateformComponent implements OnInit {
     }
   }
 
-
   onFieldTypeChange(rowIdx: number, fieldIdx: number, newType: string) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
       fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
       this.additionalFields[rowIdx].fields[fieldIdx].inputType = newType;
-      
-      if (newType === 'checkbox' || newType === 'radio') {
+  
+      if (newType === 'checkbox' || newType === 'radio' || newType === 'dropdown') {
         this.additionalFields[rowIdx].fields[fieldIdx].options = [];
+      }
+  
+      // Reset allowMultipleSelection for non-dropdown fields
+      if (newType !== 'dropdown') {
+        this.additionalFields[rowIdx].fields[fieldIdx].allowMultipleSelection = undefined;
+      } else {
+        this.additionalFields[rowIdx].fields[fieldIdx].allowMultipleSelection = false;
       }
     }
   }
@@ -179,7 +209,6 @@ export class UpdateformComponent implements OnInit {
       this.additionalFields[rowIdx].fields[fieldIdx].required = isRequired;
     }
   }
-
 
   addOption(rowIdx: number, fieldIdx: number) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
@@ -208,29 +237,29 @@ export class UpdateformComponent implements OnInit {
   trackByIndex(index: number, item: any): number {
     return index;
   }
-
   onUpdate(event: Event): void {
     event.preventDefault();
-
+  
     const updatedForm = {
       title: this.title,
-      additionalFields: this.additionalFields.map(row => ({ // Map rows
-        fields: row.fields.map(field => ({  // Map fields in each row
+      additionalFields: this.additionalFields.map(row => ({
+        fields: row.fields.map(field => ({
+          id: field.id || this.generateUniqueId(), // Include ID in the update
           label: field.label,
           inputType: field.inputType,
           isrequired: field.required,
-          options: field.options
+          options: field.options,
+          allowMultipleSelection: field.inputType === 'dropdown' ? field.allowMultipleSelection : undefined
         }))
       }))
     };
-
-    this.formUpdated = true; 
-
-   
+  
+    this.formUpdated = true;
+  
     setTimeout(() => {
       this.formUpdated = false;
     }, 3000);
-
+  
     this.formService.updateFormFields(this.form_id, updatedForm).subscribe({
       next: (res: any) => {
         console.log("Form updated successfully!", res);

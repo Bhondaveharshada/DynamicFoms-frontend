@@ -8,10 +8,12 @@ import { OpenaiService } from '../app/openai/openai.service';
 import Swal from 'sweetalert2';
 
 interface Field {
+  id: string; // Add unique identifier
   inputType: string;
   label: string;
   required: boolean;
   options: string[];
+  allowMultipleSelection?: boolean;
 }
 
 interface FormRow {
@@ -38,8 +40,7 @@ export class DragdropComponent {
   formFields: any[] = [];
   formSubmitted: boolean = false; 
 
-  all = ['text', 'number', 'email', 'password', 'date', 'checkbox', 'radio', 'textarea'];
-
+  all = ['text', 'number', 'email', 'password', 'date', 'checkbox', 'radio', 'dropdown', 'textarea'];
   additionalFields: FormRow[] = [];
   
   newRowPlaceholder: any[] = [];
@@ -48,6 +49,9 @@ export class DragdropComponent {
     return [...this.additionalFields.map((_, index) => `field-list-${index}`), 'new-row-placeholder'];
   }
 
+  private generateFieldId(): string {
+    return 'field_' + new Date().getTime() + '_' + Math.floor(Math.random() * 1000);
+  }
  
   getRowClass(row: any): string {
     let classes = 'form-row-container';
@@ -64,45 +68,43 @@ export class DragdropComponent {
   
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
-     
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       const draggedFieldType = event.item.data;
       
       if (event.container.id === 'new-row-placeholder') {
-      
         this.additionalFields.push({
           fields: [{
+            id: this.generateFieldId(),
             inputType: draggedFieldType,
             label: '',
             required: false,
-            options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : []
+            options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : [],
+            allowMultipleSelection: draggedFieldType === 'dropdown' ? false : undefined
           }]
         });
       } else {
-        
         const containerIdMatch = event.container.id.match(/field-list-(\d+)/);
         if (containerIdMatch) {
           const targetRowIndex = parseInt(containerIdMatch[1], 10);
           
-          
           if (targetRowIndex >= 0 && targetRowIndex < this.additionalFields.length) {
-      
             this.additionalFields[targetRowIndex].fields.push({
+              id: this.generateFieldId(),
               inputType: draggedFieldType,
               label: '',
               required: false,
-              options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : []
+              options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' || draggedFieldType === 'dropdown' ? [] : [],
+              allowMultipleSelection: draggedFieldType === 'dropdown' ? false : undefined
             });
           }
         }
       }
       this.updateRowClasses();
-   
       this.cdr.detectChanges();
     }
   }
-
+  
     updateRowClasses() {
       this.additionalFields.forEach(row => {
           if (row.fields.length === 1) {
@@ -113,24 +115,33 @@ export class DragdropComponent {
       });
   }
 
-  /** Adds a New Field */
+  
   addField(rowIndex: number) {
     if (rowIndex >= 0 && rowIndex < this.additionalFields.length) {
-      const newField: Field = { inputType: 'text', label: '', required: false, options: [] };
+      const newField: Field = { 
+        id: this.generateFieldId(),
+        inputType: 'text', 
+        label: '', 
+        required: false, 
+        options: [] 
+      };
       this.additionalFields[rowIndex].fields.push(newField);
       this.cdr.detectChanges();
     }
     this.updateRowClasses();
   }
-
-  /** Adds a new row with one default field */
   addNewRow() {
-    const newField: Field = { inputType: 'text', label: '', required: false, options: [] };
+    const newField: Field = { 
+      id: this.generateFieldId(),
+      inputType: 'text', 
+      label: '', 
+      required: false, 
+      options: [] 
+    };
     const newRow: FormRow = { fields: [newField] };
     this.additionalFields.push(newRow);
     this.cdr.detectChanges();
     
-    // For debugging
     console.log('Added new row. Total rows:', this.additionalFields.length);
     console.log('New row structure:', JSON.stringify(newRow));
   }
@@ -154,10 +165,9 @@ export class DragdropComponent {
         fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
       this.additionalFields[rowIdx].fields[fieldIdx].inputType = newType;
       // Initialize options array for checkbox/radio
-      if (newType === 'checkbox' || newType === 'radio') {
+      if (newType === 'checkbox' || newType === 'radio' || newType === 'dropdown') {
         this.additionalFields[rowIdx].fields[fieldIdx].options = [];
-      }
-    }
+      }    }
   }
 
   /** Handles Label Change */
@@ -215,45 +225,22 @@ export class DragdropComponent {
     let isValid = true;
     const validationMessages: string[] = [];
   
-    // this.additionalFields.forEach((row, rowIdx) => {
-    //   row.fields.forEach((field, fieldIdx) => {
-        
-    //     if (!field.label || field.label.trim() === '') {
-    //       isValid = false;
-    //       validationMessages.push(`Row ${rowIdx + 1}, Field ${fieldIdx + 1}: Label is required.`);
-    //     }... //     if ((field.inputType === 'checkbox' || field.inputType === 'radio') && field.options.length > 0) {
-    //       field.options.forEach((option, optionIdx) => {
-    //         if (!option || option.trim() === '') {
-    //           isValid = false;
-    //           validationMessages.push(`Row ${rowIdx + 1}, Field ${fieldIdx + 1}, Option ${optionIdx + 1}: Option text is required.`);
-    //         }
-    //       });
-    //     }
-    //   });
-    // });
-  
-    // If validation fails, show error messages
-    if (!isValid) {
-      Swal.fire({ 
-        icon: 'error', 
-        title: 'Validation Error', 
-        html: validationMessages.join('<br>') 
-      });
-      return;
-    }
-  
     // If validation passes, proceed to save the form
     const formData = {
       title: this.title,
       additionalFields: this.additionalFields.map(row => ({
         fields: row.fields.map(field => ({
+          id: field.id, // Include the field ID
           label: field.label || 'Untitled',
           inputType: field.inputType,
           isrequired: field.required,
-          options: field.options || []
+          options: field.options || [],
+          allowMultipleSelection: field.inputType === 'dropdown' ? field.allowMultipleSelection : undefined
         }))
       }))
     };
+  
+  
   
     // Log the exact data being sent to the server
     console.log("Sending form data structure:", JSON.stringify(formData, null, 2));
@@ -281,7 +268,6 @@ export class DragdropComponent {
       },
       error: (err: any) => {
         Swal.close();
-        // console.error('Error saving form (full details):', err);
         let errorMessage = 'An unknown error occurred';
         if (err.error && err.error.message) {
           errorMessage = err.error.message;
@@ -294,8 +280,6 @@ export class DragdropComponent {
       },
     });
   }
-
-  
   saveLink() {
     if (!this.formLink || !this._id) {
       console.error('Missing form link or ID');
@@ -339,6 +323,19 @@ export class DragdropComponent {
     });
   }
 
+  findFieldById(fieldId: string): { field: Field, rowIndex: number, fieldIndex: number } | null {
+    for (let rowIndex = 0; rowIndex < this.additionalFields.length; rowIndex++) {
+      const row = this.additionalFields[rowIndex];
+      for (let fieldIndex = 0; fieldIndex < row.fields.length; fieldIndex++) {
+        const field = row.fields[fieldIndex];
+        if (field.id === fieldId) {
+          return { field, rowIndex, fieldIndex };
+        }
+      }
+    }
+    return null;
+  }
+
   /** Processes AI Prompt */
   processPrompt() {
     if (!this.prompt) return;
@@ -354,6 +351,14 @@ export class DragdropComponent {
         try {
           const parsedResponse = JSON.parse(this.promptResponse);
           if (parsedResponse && parsedResponse.additionalFields) {
+            // Ensure each field has an ID
+            parsedResponse.additionalFields.forEach((row: FormRow) => {
+              row.fields.forEach((field: Field) => {
+                if (!field.id) {
+                  field.id = this.generateFieldId();
+                }
+              });
+            });
             this.additionalFields = parsedResponse.additionalFields;
             this.cdr.detectChanges();
           } else {

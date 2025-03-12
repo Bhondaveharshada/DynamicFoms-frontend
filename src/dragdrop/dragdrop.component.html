@@ -30,11 +30,12 @@
         <div class="row-header d-flex justify-content-between align-items-center mb-2">
           <span class="badge bg-secondary">Row {{ rowIdx + 1 }}</span>
         </div>
-      
+
         <div [id]="'field-list-' + rowIdx" cdkDropList [cdkDropListData]="row.fields" [cdkDropListConnectedTo]="['all']"
           (cdkDropListDropped)="drop($event)" class="row fields-row">
           <div *ngFor="let field of row.fields; let fieldIdx = index" class="form-field-wrapper" cdkDrag>
             <div class="form-field p-3 border rounded mb-2">
+              
               <label for="label-{{ rowIdx }}-{{ fieldIdx }}">Label:</label>
               <input id="label-{{ rowIdx }}-{{ fieldIdx }}" [(ngModel)]="field.label" type="text"
                 class="form-control mb-2" placeholder="Enter label text" required />
@@ -46,7 +47,9 @@
                 <option *ngFor="let inputType of all" [value]="inputType">{{ inputType }}</option>
               </select>
 
-              <div *ngIf="field.inputType === 'checkbox' || field.inputType === 'radio'" class="mt-2">
+              <div
+                *ngIf="field.inputType === 'checkbox' || field.inputType === 'radio' || field.inputType === 'dropdown'"
+                class="mt-2">
                 <div class="d-flex mb-2" *ngFor="let option of field.options; let j = index; trackBy: trackByIndex">
                   <input [(ngModel)]="field.options[j]" placeholder="Option {{ j + 1 }}" class="form-control me-2">
                   <button class="btn btn-outline-danger btn-sm"
@@ -63,6 +66,14 @@
                 <label class="form-check-label" for="required-{{ rowIdx }}-{{ fieldIdx }}">Required</label>
               </div>
 
+              <!-- Add this in your field options section for dropdown fields -->
+              <div *ngIf="field.inputType === 'dropdown'" class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="allowMultiple{{rowIdx}}-{{fieldIdx}}"
+                  [(ngModel)]="field.allowMultipleSelection">
+                <label class="form-check-label" for="allowMultiple{{rowIdx}}-{{fieldIdx}}">
+                  Allow multiple selection
+                </label>
+              </div>
               <button class="btn btn-outline-danger btn-sm mt-2" (click)="removeField(rowIdx, fieldIdx)">Remove</button>
             </div>
           </div>
