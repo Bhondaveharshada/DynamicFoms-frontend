@@ -12,6 +12,8 @@ interface Field {
   inputType: string;
   label: string;
   required: boolean;
+  validateNumber: boolean;
+  numberValidation: string | null;
   options: string[];
   allowMultipleSelection?: boolean;
 }
@@ -38,11 +40,11 @@ export class DragdropComponent {
   prompt = '';
   promptResponse = '';
   formFields: any[] = [];
-  formSubmitted: boolean = false; 
+  formSubmitted: boolean = false;
 
   all = ['text', 'number', 'email', 'password', 'date', 'checkbox', 'radio', 'dropdown', 'textarea'];
   additionalFields: FormRow[] = [];
-  
+
   newRowPlaceholder: any[] = [];
 
   getFieldsListIds(): string[] {
@@ -52,26 +54,26 @@ export class DragdropComponent {
   private generateFieldId(): string {
     return 'field_' + new Date().getTime() + '_' + Math.floor(Math.random() * 1000);
   }
- 
+
   getRowClass(row: any): string {
     let classes = 'form-row-container';
-  
+
     if (row.fields && row.fields.length === 1) {
       classes += ' single-item';
     }
     else if (row.fields && row.fields.length === 2) {
       classes += ' two-items';
     }
-    
+
     return classes;
   }
-  
+
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       const draggedFieldType = event.item.data;
-      
+
       if (event.container.id === 'new-row-placeholder') {
         this.additionalFields.push({
           fields: [{
@@ -79,6 +81,8 @@ export class DragdropComponent {
             inputType: draggedFieldType,
             label: '',
             required: false,
+            validateNumber:false,
+            numberValidation: null,
             options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : [],
             allowMultipleSelection: draggedFieldType === 'dropdown' ? false : undefined
           }]
@@ -87,13 +91,15 @@ export class DragdropComponent {
         const containerIdMatch = event.container.id.match(/field-list-(\d+)/);
         if (containerIdMatch) {
           const targetRowIndex = parseInt(containerIdMatch[1], 10);
-          
+
           if (targetRowIndex >= 0 && targetRowIndex < this.additionalFields.length) {
             this.additionalFields[targetRowIndex].fields.push({
               id: this.generateFieldId(),
               inputType: draggedFieldType,
               label: '',
               required: false,
+              validateNumber:false,
+              numberValidation: null,
               options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' || draggedFieldType === 'dropdown' ? [] : [],
               allowMultipleSelection: draggedFieldType === 'dropdown' ? false : undefined
             });
@@ -104,26 +110,43 @@ export class DragdropComponent {
       this.cdr.detectChanges();
     }
   }
-  
+
+  validateNumberInput(event: KeyboardEvent) {
+    const allowedChars = /[0-9.]/
+    const inputChar = String.fromCharCode(event.keyCode);
+
+    // Prevent multiple dots
+    if (inputChar === '.' && (event.target as HTMLInputElement).value.includes('.')) {
+      event.preventDefault();
+    }
+
+    if (!allowedChars.test(inputChar)) {
+      event.preventDefault();
+    }
+  }
+
+
     updateRowClasses() {
       this.additionalFields.forEach(row => {
           if (row.fields.length === 1) {
-             
+
           } else {
               // row.classList.remove('single-item');
           }
       });
   }
 
-  
+
   addField(rowIndex: number) {
     if (rowIndex >= 0 && rowIndex < this.additionalFields.length) {
-      const newField: Field = { 
+      const newField: Field = {
         id: this.generateFieldId(),
-        inputType: 'text', 
-        label: '', 
-        required: false, 
-        options: [] 
+        inputType: 'text',
+        label: '',
+        required: false,
+        validateNumber:false,
+        numberValidation: null,
+        options: []
       };
       this.additionalFields[rowIndex].fields.push(newField);
       this.cdr.detectChanges();
@@ -131,17 +154,19 @@ export class DragdropComponent {
     this.updateRowClasses();
   }
   addNewRow() {
-    const newField: Field = { 
+    const newField: Field = {
       id: this.generateFieldId(),
-      inputType: 'text', 
-      label: '', 
-      required: false, 
-      options: [] 
+      inputType: 'text',
+      label: '',
+      required: false,
+      validateNumber:false,
+      numberValidation: null,
+      options: []
     };
     const newRow: FormRow = { fields: [newField] };
     this.additionalFields.push(newRow);
     this.cdr.detectChanges();
-    
+
     console.log('Added new row. Total rows:', this.additionalFields.length);
     console.log('New row structure:', JSON.stringify(newRow));
   }
@@ -219,12 +244,12 @@ export class DragdropComponent {
 
   onSave(event: Event) {
     event.preventDefault();
-    this.formSubmitted = true; 
-  
+    this.formSubmitted = true;
+
     // Validate fields
     let isValid = true;
     const validationMessages: string[] = [];
-  
+
     // If validation passes, proceed to save the form
     const formData = {
       title: this.title,
@@ -234,28 +259,30 @@ export class DragdropComponent {
           label: field.label || 'Untitled',
           inputType: field.inputType,
           isrequired: field.required,
+          validateNumber: field.validateNumber,
+          numberValidation: field.numberValidation,
           options: field.options || [],
           allowMultipleSelection: field.inputType === 'dropdown' ? field.allowMultipleSelection : undefined
         }))
       }))
     };
-  
-  
-  
+
+
+
     // Log the exact data being sent to the server
     console.log("Sending form data structure:", JSON.stringify(formData, null, 2));
-  
+
     const formId = new Date().getTime();
-  
+
     // Show loading indicator
-    Swal.fire({ 
-      title: 'Saving...', 
-      text: 'Please wait', 
+    Swal.fire({
+      title: 'Saving...',
+      text: 'Please wait',
       allowOutsideClick: false,
-      didOpen: () => Swal.showLoading() 
+      didOpen: () => Swal.showLoading()
     });
-  
-    this.formService.addFormFields(formData, formId).subscribe({
+
+     this.formService.addFormFields(formData, formId).subscribe({
       next: (res: any) => {
         Swal.close();
         console.log('Form saved successfully:', res);
@@ -272,10 +299,10 @@ export class DragdropComponent {
         if (err.error && err.error.message) {
           errorMessage = err.error.message;
         }
-        Swal.fire({ 
-          icon: 'error', 
-          title: 'Error', 
-          text: `Failed to save form: ${errorMessage}` 
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: `Failed to save form: ${errorMessage}`
         });
       },
     });
@@ -285,7 +312,7 @@ export class DragdropComponent {
       console.error('Missing form link or ID');
       return;
     }
-  
+
     // Show loading indicator
     const savingToast = Swal.mixin({
       toast: true,
@@ -293,13 +320,13 @@ export class DragdropComponent {
       showConfirmButton: false
     });
     savingToast.fire({ title: 'Saving link...', icon: 'info' });
-  
+
     this.formService.saveFormLink(this._id, this.formLink).subscribe({
       next: (res: any) => {
         this.isLinkSaved = true;
         console.log('Link saved successfully:', res);
         savingToast.close();
-        
+
         // Show success toast
         Swal.mixin({
           toast: true,
@@ -311,7 +338,7 @@ export class DragdropComponent {
       error: (err: any) => {
         console.error('Error saving link:', err);
         savingToast.close();
-        
+
         // Show error toast
         Swal.mixin({
           toast: true,

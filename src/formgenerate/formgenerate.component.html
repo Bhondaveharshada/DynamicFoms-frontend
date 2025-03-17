@@ -114,13 +114,16 @@
                   <div *ngIf="field.get('value')?.touched && field.get('value')?.invalid" class="text-danger mt-2">
                     <small *ngIf="field.get('value')?.errors?.['required']">This field is required.</small>
                     <small *ngIf="field.get('value')?.errors?.['email']">Please enter a valid email address.</small>
-                    <small *ngIf="field.get('value')?.errors?.['pattern']">Only numeric values are allowed. it must be
-                      exactly 10 digits</small>
+                    <small *ngIf="field.get('value')?.errors?.['pattern']">
+                      Invalid format. Expected format: {{ field.get('numberValidation')?.value}}
+                    </small>
                     <small *ngIf="field.get('value')?.errors?.['minlength']">Minimum length required:
-                      {{ field.get('value')?.errors?.['minlength']?.requiredLength }} characters.</small>
-                    <small *ngIf="field.get('value')?.errors?.['requiredTrue']">You must check at least 1 box to
-                      proceed.</small>
+                      {{ field.get('value')?.errors?.['minlength']?.requiredLength }} characters.
+                    </small>
+                    <small *ngIf="field.get('value')?.errors?.['requiredTrue']">You must check at least 1 box to proceed.</small>
                   </div>
+
+
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { Component, HostListener } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ReactiveFormsModule, Validators, FormGroup, FormBuilder, FormArray, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, Validators, FormGroup, FormBuilder, FormArray, FormControl, AbstractControl } from '@angular/forms';
 import { CommonModule, JsonPipe, Location } from '@angular/common';
 import { FormService } from '../services/form.service';
 import Swal from 'sweetalert2';
@@ -40,7 +40,7 @@ export class FormgenerateComponent {
   prePopulatedFlag = false;
   editModeFlag = false;
   patientData: any;
-  Array = Array; 
+  Array = Array;
 
   constructor(private location: Location, private fb: FormBuilder, private route: ActivatedRoute, private formService: FormService, private router: Router, private patientService: PatientService, private emailService: EmailService) {
 
@@ -78,40 +78,57 @@ export class FormgenerateComponent {
     this.formService.getFormFields(id).subscribe({
       next: (response: any) => {
         this.formData = response.result;
-        
+        console.log("this.formData : ",this.formData);
+
         // Map fields and ensure allowMultipleSelection is set correctly for each field
         this.fields = response.result.additionalFields.map((field: any) => field);
         this.previewForm = this.fb.group({
           title: [this.formData.title, Validators.required],
           additionalFields: this.fb.array(
-            this.formData.additionalFields.map((row: any) =>
-              this.fb.group({
-                fields: this.fb.array(
-                  row.fields.map((field: any) =>
-                    this.fb.group({
-                      id: [field.id || this.generateUniqueId(), Validators.required],
-                      label: [field.label, Validators.required],
-                      value:
-                        field.inputType === 'checkbox' || (field.inputType === 'dropdown' && field.allowMultipleSelection === true)
-                          ? [Array.isArray(field.value) ? field.value : []]
-                          : [field.value || '', this.getDynamicValidators(field)],
-                      inputType: [field.inputType, Validators.required],
-                      isrequired: [field.isrequired],
-                      options: [Array.isArray(field.options) ? field.options : []],
-                      allowMultipleSelection: [field.allowMultipleSelection === true],
-                      isOpen: [false]
-                    })
-                  )
-                )
-              })
-            )
+              this.formData.additionalFields.map((row: any) =>
+                  this.fb.group({
+                      fields: this.fb.array(
+                          row.fields.map((field: any) =>
+                              this.fb.group({
+                                  id: [field.id || this.generateUniqueId(), Validators.required],
+                                  label: [field.label, Validators.required],
+                                  value: field.inputType === 'checkbox' ||
+                                        (field.inputType === 'dropdown' && field.allowMultipleSelection === true)
+                                      ? [Array.isArray(field.value) ? field.value : []]
+                                      : new FormControl(field.value || '', Validators.compose(this.getDynamicValidators(field))),
+
+                                  inputType: [field.inputType, Validators.required],
+                                  isrequired: [field.isrequired],
+                                  options: [Array.isArray(field.options) ? field.options : []],
+                                  allowMultipleSelection: [field.allowMultipleSelection === true],
+                                  isOpen: [false],
+                                  validateNumber: field.validateNumber,
+                                  numberValidation: field.numberValidation
+                              })
+                          )
+                      )
+                  })
+              )
           ),
-        });
-        this.checkIfFormFilled().then((isFilled) => {
+      });
+
+
+      const control = this.previewForm.get('additionalFields.0.fields.0.value');
+      console.log("Validators Assigned:", control?.validator ? control.validator({} as AbstractControl) : "No validators");
+
+
+
+      this.previewForm.updateValueAndValidity();
+      console.log("Form Errors 0:", this.previewForm.get('additionalFields.0.fields.0.value')?.errors);
+      console.log("Validators Applied:", control?.validator ? control.validator({} as AbstractControl) : "No validators");
+
+      console.log("preview forms 0 : ", this.previewForm.valid, this.previewForm.value);
+
+        /* this.checkIfFormFilled().then((isFilled) => {
           if (isFilled) {
             console.log('Form is already filled, populating data...');
           }
-        });
+        }); */
       },
       error: (err: any) => {
         console.error("Error fetching fields", err);
@@ -124,7 +141,7 @@ export class FormgenerateComponent {
     field.get('value')?.setValue(option);
     field.patchValue({ isOpen: false });
   }
-  
+
   // Helper method to generate a unique ID if one doesn't exist
   generateUniqueId(): string {
     return 'field_' + new Date().getTime() + '_' + Math.random().toString(36).substr(2, 9);
@@ -143,7 +160,7 @@ export class FormgenerateComponent {
   onDropdownChange(event: Event, rowIndex: number, fieldIndex: number): void {
     const selectElement = event.target as HTMLSelectElement;
     const field = this.getFields(rowIndex).at(fieldIndex) as FormGroup;
-  
+
     if (field.value.allowMultipleSelection === true) {
       // Handle multiple selection
       const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
@@ -155,18 +172,14 @@ export class FormgenerateComponent {
     }
   }
 
-  
+
 
   getValidators(inputType: string) {
     switch (inputType) {
       case 'email':
         return [Validators.required, Validators.email];
-      case 'number':
-        return [Validators.required, Validators.pattern(/^[0-9]{10}$/)];
       case 'text':
         return [Validators.required, Validators.minLength(3)];
-      case 'password':
-        return [Validators.required, Validators.minLength(6)];
       case 'checkbox':
         return [Validators.requiredTrue]; // Ensures checkbox is checked
       case 'radio':
@@ -177,26 +190,40 @@ export class FormgenerateComponent {
         return [Validators.required]; // Default validator
     }
   }
-  
-  getDynamicValidators(field: any) {
+
+  getDynamicValidators(field: any): any[] {
+    const validators = [];
+
     if (field.isrequired) {
-      return this.getValidators(field.inputType); // Apply validators if 'required'
-    } else {
-      switch (field.inputType) {
-        case 'email':
-          return [Validators.email];
-        case 'number':
-          return [Validators.pattern(/^[0-9]{10}$/)];
-        case 'text':
-          return [Validators.minLength(3)];
-        case 'password':
-          return [Validators.minLength(6)];
-        default:
-          return [];
-      }
+      validators.push(Validators.required);
     }
+
+    if (field.inputType === 'email') {
+      validators.push(Validators.email);
+    }
+
+    if (field.inputType === 'number' && field.validateNumber && field.numberValidation) {
+      const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
+      const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
+      const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
+
+      // Updated regex to handle numeric input field behavior
+      const regexPattern = `^\\d{1,${beforeDecimal}}(\\.\\d{${afterDecimal}})?$`;
+
+      console.log("Applying pattern validator:", regexPattern);
+      validators.push(Validators.pattern(new RegExp(regexPattern)));
   }
-  
+
+
+
+
+    return validators;
+  }
+
+
+
+
+
   get additionalFields(): FormArray {
     return this.previewForm?.get('additionalFields') as FormArray;
   }
@@ -204,15 +231,25 @@ export class FormgenerateComponent {
   getFields(rowIndex: number): FormArray {
     return this.additionalFields.at(rowIndex).get('fields') as FormArray;
   }
+
   onSubmit() {
     if (this.previewForm?.valid) {
+      console.log("Form is Valid:", this.previewForm.value);
+      alert("Valid");
+    } else {
+      // 🔥 Mark all fields as touched to trigger error messages
+      this.previewForm?.markAllAsTouched();
+      console.log("Form Errors:", this.previewForm?.get('additionalFields.0.fields.0.value')?.errors);
+      alert("Invalid");
+    }
+    /* if (this.previewForm?.valid) {
       const formData = {
         ...this.previewForm.value,
         patientId: this.patientId,
         timepointId: this.timepointId,
         formId: this.route.snapshot.queryParams['formId']
       };
-  
+
       // Ensure proper handling of allowMultipleSelection flag and validate IDs
       formData.additionalFields.forEach((rowGroup: any) => {
         rowGroup.fields.forEach((field: any) => {
@@ -220,19 +257,19 @@ export class FormgenerateComponent {
           if (!field.id) {
             field.id = this.generateUniqueId();
           }
-          
+
           // Only include allowMultipleSelection for dropdown fields
           if (field.inputType === 'dropdown') {
             field.allowMultipleSelection = field.allowMultipleSelection === true;
           } else {
             delete field.allowMultipleSelection;
           }
-          
+
           // Remove the isOpen property as it's UI-only
           delete field.isOpen;
         });
       });
-  
+
       this.formService.addform(formData, this.formfieldId).subscribe({
         next: (res: any) => {
 
@@ -254,7 +291,7 @@ export class FormgenerateComponent {
                   icon: 'success',
                   confirmButtonText: 'OK'
                 });
-                
+
                 const timestamp = new Date().getTime();
                 this.router.navigate(['/patient/datematrix'], {
                   queryParams: {
@@ -307,7 +344,7 @@ export class FormgenerateComponent {
         confirmButtonText: 'OK'
       });
       console.log("Form is invalid");
-    }
+    } */
   }
 
   onBack() {
@@ -353,42 +390,42 @@ export class FormgenerateComponent {
       console.error("Preview form is not initialized or additionalFields is missing");
       return;
     }
-  
+
     const additionalFieldsControl = this.previewForm.get('additionalFields') as FormArray;
-  
+
     existingData.additionalFields.forEach((existingFieldObject: any) => {
       additionalFieldsControl.controls.forEach((fieldGroupControl) => {
         const fieldsFormArray = fieldGroupControl.get('fields') as FormArray;
-  
+
         existingFieldObject.fields.forEach((existingField: any) => {
           const matchingField = fieldsFormArray.controls.find((control) => {
             const controlValue = control.value;
             // Match by id if available, otherwise fall back to matching by label and type
-            return (existingField.id && controlValue.id === existingField.id) || 
+            return (existingField.id && controlValue.id === existingField.id) ||
                    (controlValue.inputType === existingField.inputType && controlValue.label === existingField.label);
           });
-  
+
           if (matchingField) {
             const fieldFormGroup = matchingField as FormGroup;
             // Ensure the ID is set correctly
             fieldFormGroup.get('id')?.setValue(existingField.id || this.generateUniqueId());
-            
+
             // IMPORTANT FIX: Preserve the allowMultipleSelection property correctly
             if (existingField.inputType === 'dropdown') {
               // Use the original field's setting if it exists, otherwise keep the current setting
-              const useMultipleSelection = existingField.hasOwnProperty('allowMultipleSelection') 
-                ? existingField.allowMultipleSelection === true 
+              const useMultipleSelection = existingField.hasOwnProperty('allowMultipleSelection')
+                ? existingField.allowMultipleSelection === true
                 : fieldFormGroup.get('allowMultipleSelection')?.value === true;
-              
+
               fieldFormGroup.get('allowMultipleSelection')?.setValue(useMultipleSelection);
             }
-            
+
             // Handle value setting based on field type and allowMultipleSelection
-            if (existingField.inputType === 'checkbox' || 
-                (existingField.inputType === 'dropdown' && 
+            if (existingField.inputType === 'checkbox' ||
+                (existingField.inputType === 'dropdown' &&
                  (existingField.allowMultipleSelection === true || fieldFormGroup.get('allowMultipleSelection')?.value === true))) {
               // Make sure the value is an array
-              const valueArray = Array.isArray(existingField.value) ? existingField.value : 
+              const valueArray = Array.isArray(existingField.value) ? existingField.value :
                                 (existingField.value ? [existingField.value] : []);
               fieldFormGroup.get('value')?.setValue(valueArray);
             } else {
@@ -399,12 +436,12 @@ export class FormgenerateComponent {
         });
       });
     });
-  
+
     this.previewForm.disable();
     this.editModeFlag = false;
     this.prePopulatedFlag = true;
   }
-  
+
   formatValue(value: any, fieldType: string): string {
     if (fieldType === 'dropdown' && Array.isArray(value)) {
       return value.join(', ');
@@ -440,7 +477,7 @@ export class FormgenerateComponent {
         timepointId: this.timepointId,
         formId: this.route.snapshot.queryParams['formId']
       };
-      
+
       // Validate IDs and remove UI-only properties
       formData.additionalFields.forEach((rowGroup: any) => {
         rowGroup.fields.forEach((field: any) => {
@@ -448,12 +485,12 @@ export class FormgenerateComponent {
           if (!field.id) {
             field.id = this.generateUniqueId();
           }
-          
+
           // Remove UI-only properties
           delete field.isOpen;
         });
       });
-      
+
       console.log("Payload : ", formData);
       this.formService.updateSubmittedResponse(formData).subscribe({
         next: (res) => {
@@ -599,14 +636,14 @@ export class FormgenerateComponent {
       });
     }
   }
-  
+
 
 toggleDropdown(rowIndex: number, fieldIndex: number): void {
   if (!this.previewForm || this.previewForm.disabled) return;
-  
+
   const field = this.getFields(rowIndex).at(fieldIndex);
   field.patchValue({ isOpen: !field.value.isOpen });
-  
+
   this.additionalFields.controls.forEach((row, rIndex) => {
     const fields = row.get('fields') as FormArray;
     fields.controls.forEach((f, fIndex) => {
@@ -629,8 +666,8 @@ isOptionSelected(selectedValues: any[], option: string): boolean {
 
 
 isAllSelected(selectedValues: any[], options: string[]): boolean {
-  return Array.isArray(selectedValues) && 
-         options.length > 0 && 
+  return Array.isArray(selectedValues) &&
+         options.length > 0 &&
          options.every(opt => selectedValues.includes(opt));
 }
 
@@ -639,13 +676,13 @@ toggleSelectAll(event: Event, rowIndex: number, fieldIndex: number): void {
   const isChecked = (event.target as HTMLInputElement).checked;
   const field = this.getFields(rowIndex).at(fieldIndex);
   const options = field.value.options;
-  
+
   if (isChecked) {
-   
-    
+
+
     field.get('value')?.setValue([...options]);
   } else {
-   
+
     field.get('value')?.setValue([]);
   }
 }
@@ -655,14 +692,14 @@ toggleOption(event: Event, rowIndex: number, fieldIndex: number, option: string)
   const isChecked = (event.target as HTMLInputElement).checked;
   const field = this.getFields(rowIndex).at(fieldIndex);
   const currentValue = field.get('value')?.value || [];
-  
+
   if (isChecked) {
-   
+
     if (!currentValue.includes(option)) {
       field.get('value')?.setValue([...currentValue, option]);
     }
   } else {
-   
+
     field.get('value')?.setValue(currentValue.filter((val: string) => val !== option));
   }
 }
@@ -685,18 +722,18 @@ getSelectedOptionsText(selectedValues: any[], options: string[]): string {
 
 @HostListener('document:click', ['$event'])
 onDocumentClick(event: MouseEvent): void {
-  
+
   if (this.previewForm) {
     let clickedInsideDropdown = false;
-    
-    
+
+
     const dropdowns = document.querySelectorAll('.dropdown-container');
     dropdowns.forEach(dropdown => {
       if (dropdown.contains(event.target as Node)) {
         clickedInsideDropdown = true;
       }
     });
-    
+
     if (!clickedInsideDropdown) {
       this.additionalFields.controls.forEach(row => {
         const fields = row.get('fields') as FormArray;
@@ -708,6 +745,6 @@ onDocumentClick(event: MouseEvent): void {
       });
     }
   }
-  
+
 }
 }
