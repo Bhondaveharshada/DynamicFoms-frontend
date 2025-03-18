@@ -310,3 +310,38 @@ html, body {
   padding: 0;
   box-sizing: border-box;
 }
+
+/* Add this to your component's CSS file */
+
+.form-fields-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.form-fields-list .list-group-item {
+  cursor: pointer;
+  text-align: left;
+}
+
+.form-fields-list .list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Add some styling for fields with visibility conditions */
+.form-field-wrapper.has-visibility-condition {
+  border-left: 3px solid #007bff;
+}
+
+.form-fields-list .boolean-values {
+  display: none; /* Hide boolean values */
+}
+
+/* Add a custom style for conditional fields in the form builder */
+.visibility-condition-badge {
+  font-size: 0.7rem;
+  margin-left: 5px;
+  background-color: #17a2b8;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+}

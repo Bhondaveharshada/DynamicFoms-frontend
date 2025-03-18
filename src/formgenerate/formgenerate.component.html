@@ -16,7 +16,7 @@
               [class.two-item-row]="getFields(rowIndex).controls.length === 2">
               <div *ngFor="let field of getFields(rowIndex).controls; let fieldIndex = index"
                 [formGroupName]="fieldIndex" class="col-md-4 mb-3">
-                <div class="form-field p-3 border rounded">
+                <div *ngIf="field.value.isVisible" class="form-field p-3 border rounded">
                   <!-- Hidden ID field -->
                   <input type="hidden" formControlName="id">
 
