@@ -10,14 +10,20 @@ import { PatientService } from '../app/patient/service/patient-service.service';
 import { EmailService } from '../app/Email/email.service';
 
 interface Field {
-  id: string;        // Add this new field
-  options?: string[];
-  inputType: string;
-  isrequired: string;
+  id: string;
   label: string;
-  _id: string;
+  value: string;
+  inputType: string;
+  isrequired: boolean;
+  options?: string[];
   allowMultipleSelection?: boolean;
+  isOpen?: boolean;
+  validateNumber?: boolean;
+  numberValidation?: string;
+  softValidation?: boolean;
+  validationWarning?: string | null;  // Ensure this property exists
 }
+
 
 @Component({
   selector: 'app-formgenerate',
@@ -88,29 +94,60 @@ export class FormgenerateComponent {
               this.formData.additionalFields.map((row: any) =>
                   this.fb.group({
                       fields: this.fb.array(
-                          row.fields.map((field: any) =>
-                              this.fb.group({
-                                  id: [field.id || this.generateUniqueId(), Validators.required],
-                                  label: [field.label, Validators.required],
-                                  value: field.inputType === 'checkbox' ||
-                                        (field.inputType === 'dropdown' && field.allowMultipleSelection === true)
-                                      ? [Array.isArray(field.value) ? field.value : []]
-                                      : new FormControl(field.value || '', Validators.compose(this.getDynamicValidators(field))),
+                        row.fields.map((field: any) => {
+                          const dynamicValidators = this.getDynamicValidators(field);
+                          const control = new FormControl(
+                              field.value || '',
+                              dynamicValidators.length > 0 ? Validators.compose(dynamicValidators) : null
+                          );
 
-                                  inputType: [field.inputType, Validators.required],
-                                  isrequired: [field.isrequired],
-                                  options: [Array.isArray(field.options) ? field.options : []],
-                                  allowMultipleSelection: [field.allowMultipleSelection === true],
-                                  isOpen: [false],
-                                  validateNumber: field.validateNumber,
-                                  numberValidation: field.numberValidation
-                              })
-                          )
+                          if (field.inputType === 'number' && field.validateNumber && field.softValidation) {
+                            const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
+                            const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
+                            const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
+
+                            // Updated regex to enforce decimal places strictly
+                            const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
+
+                              control.valueChanges.subscribe(value => {
+                                const fieldGroup = control.parent;
+                                if (fieldGroup) {
+                                    if (value && !regexPattern.test(value)) {
+                                        // Show a warning but allow input
+                                        fieldGroup.get('validationWarning')?.setValue(`⚠ Value does not match expected format: ${field.numberValidation}`, { emitEvent: false });
+                                    } else {
+                                        // Clear the warning if the input matches the format
+                                        fieldGroup.get('validationWarning')?.setValue(null, { emitEvent: false });
+                                    }
+                                }
+                            });
+
+                          }
+
+                          return this.fb.group({
+                            id: [field.id || this.generateUniqueId(), Validators.required],
+                            label: [field.label, Validators.required],
+                            value: control,
+                            inputType: [field.inputType, Validators.required],
+                            isrequired: [field.isrequired],
+                            options: [Array.isArray(field.options) ? field.options : []],
+                            allowMultipleSelection: [field.allowMultipleSelection === true],
+                            isOpen: [false],
+                            validateNumber: field.validateNumber,
+                            numberValidation: field.numberValidation,
+                            softValidation: field.softValidation,
+                            validationWarning: [null],  // ✅ Now TypeScript will recognize this field
+                        });
+
+                      })
+
                       )
                   })
               )
           ),
       });
+
+
 
 
       const control = this.previewForm.get('additionalFields.0.fields.0.value');
@@ -195,31 +232,32 @@ export class FormgenerateComponent {
     const validators = [];
 
     if (field.isrequired) {
-      validators.push(Validators.required);
+        validators.push(Validators.required);
     }
 
     if (field.inputType === 'email') {
-      validators.push(Validators.email);
+        validators.push(Validators.email);
     }
 
     if (field.inputType === 'number' && field.validateNumber && field.numberValidation) {
-      const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-      const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
-      const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
+        const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
+        const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
+        const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
 
-      // Updated regex to enforce decimal places strictly
-      const regexPattern = `^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`;
+        // Updated regex to enforce decimal places strictly
+        const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
 
-      console.log("Applying pattern validator:", regexPattern);
-      validators.push(Validators.pattern(new RegExp(regexPattern)));
-  }
+        console.log("Applying pattern validator:", regexPattern);
 
-
-
-
+        if (!field.softValidation) {
+            // Hard validation: Enforce the pattern
+            validators.push(Validators.pattern(regexPattern));
+        }
+    }
 
     return validators;
-  }
+}
+
 
   validateNumberInput(event: KeyboardEvent) {
     const allowedChars = /[0-9.]/

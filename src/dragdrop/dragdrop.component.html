@@ -67,16 +67,23 @@
               </div>
 
               @if (field.inputType === 'number') {
-              <div class="form-check mt-2">
-                <input type="checkbox" class="form-check-input" id="numberValidation-{{ rowIdx }}-{{ fieldIdx }}"
-                  [(ngModel)]="field.validateNumber" />
-                <label class="form-check-label" for="numberValidation-{{ rowIdx }}-{{ fieldIdx }}">Number Validation</label>
-                @if (field.validateNumber) {
-                <input type="text" class="form-control" id="numberValidation-{{ rowIdx }}-{{ fieldIdx }}"
-                  [(ngModel)]="field.numberValidation" placeholder="Enter Number Format Ex 00.0" pattern="^\d*\.?\d*$"
-                  title="Only numbers and a single dot are allowed" (keypress)="validateNumberInput($event)" />
-                }
-              </div>
+                <div class="form-check mt-2">
+                  <input type="checkbox" class="form-check-input" id="numberValidation-{{ rowIdx }}-{{ fieldIdx }}"
+                    [(ngModel)]="field.validateNumber" />
+                  <label class="form-check-label" for="numberValidation-{{ rowIdx }}-{{ fieldIdx }}">Number Validation</label>
+                  @if (field.validateNumber) {
+                    <div>
+                      <label class="form-label">Validation Type</label>
+                      <mat-button-toggle-group name="fontStyle" aria-label="Validation Type" [(ngModel)]="field.softValidation">
+                        <mat-button-toggle [value]="true">Soft</mat-button-toggle>
+                        <mat-button-toggle [value]="false">Hard</mat-button-toggle>
+                      </mat-button-toggle-group>
+                    </div>
+                    <input type="text" class="form-control" id="numberValidation-{{ rowIdx }}-{{ fieldIdx }}"
+                      [(ngModel)]="field.numberValidation" placeholder="Enter Number Format Ex 00.0" pattern="^\d*\.?\d*$"
+                      title="Only numbers and a single dot are allowed" (keypress)="validateNumberInput($event)" />
+                  }
+                </div>
               }
 
               <!-- Add this in your field options section for dropdown fields -->

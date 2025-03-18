@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { FormService } from '../services/form.service';
 import { OpenaiService } from '../app/openai/openai.service';
 import Swal from 'sweetalert2';
+import {MatButtonToggleModule} from '@angular/material/button-toggle';
 
 interface Field {
   id: string; // Add unique identifier
@@ -13,6 +14,7 @@ interface Field {
   label: string;
   required: boolean;
   validateNumber: boolean;
+  softValidation : boolean;
   numberValidation: string | null;
   options: string[];
   allowMultipleSelection?: boolean;
@@ -25,7 +27,7 @@ interface FormRow {
 @Component({
   selector: 'app-dragdrop',
   standalone: true,
-  imports: [RouterModule, CommonModule, FormsModule, DragDropModule],
+  imports: [RouterModule, CommonModule, FormsModule, DragDropModule,MatButtonToggleModule],
   templateUrl: './dragdrop.component.html',
   styleUrl: './dragdrop.component.css'
 })
@@ -83,6 +85,7 @@ export class DragdropComponent {
             required: false,
             validateNumber:false,
             numberValidation: null,
+            softValidation: false,
             options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' ? [] : [],
             allowMultipleSelection: draggedFieldType === 'dropdown' ? false : undefined
           }]
@@ -100,6 +103,7 @@ export class DragdropComponent {
               required: false,
               validateNumber:false,
               numberValidation: null,
+              softValidation: false,
               options: draggedFieldType === 'checkbox' || draggedFieldType === 'radio' || draggedFieldType === 'dropdown' ? [] : [],
               allowMultipleSelection: draggedFieldType === 'dropdown' ? false : undefined
             });
@@ -145,6 +149,7 @@ export class DragdropComponent {
         label: '',
         required: false,
         validateNumber:false,
+        softValidation: false,
         numberValidation: null,
         options: []
       };
@@ -160,6 +165,7 @@ export class DragdropComponent {
       label: '',
       required: false,
       validateNumber:false,
+      softValidation: false,
       numberValidation: null,
       options: []
     };
@@ -260,6 +266,7 @@ export class DragdropComponent {
           inputType: field.inputType,
           isrequired: field.required,
           validateNumber: field.validateNumber,
+          softValidation: field.softValidation,
           numberValidation: field.numberValidation,
           options: field.options || [],
           allowMultipleSelection: field.inputType === 'dropdown' ? field.allowMultipleSelection : undefined
