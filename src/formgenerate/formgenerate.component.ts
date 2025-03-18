@@ -207,8 +207,8 @@ export class FormgenerateComponent {
       const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
       const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
 
-      // Updated regex to handle numeric input field behavior
-      const regexPattern = `^\\d{1,${beforeDecimal}}(\\.\\d{${afterDecimal}})?$`;
+      // Updated regex to enforce decimal places strictly
+      const regexPattern = `^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`;
 
       console.log("Applying pattern validator:", regexPattern);
       validators.push(Validators.pattern(new RegExp(regexPattern)));
@@ -217,10 +217,23 @@ export class FormgenerateComponent {
 
 
 
+
     return validators;
   }
 
+  validateNumberInput(event: KeyboardEvent) {
+    const allowedChars = /[0-9.]/
+    const inputChar = String.fromCharCode(event.keyCode);
 
+    // Prevent multiple dots
+    if (inputChar === '.' && (event.target as HTMLInputElement).value.includes('.')) {
+      event.preventDefault();
+    }
+
+    if (!allowedChars.test(inputChar)) {
+      event.preventDefault();
+    }
+  }
 
 
 

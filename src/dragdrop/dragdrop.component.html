@@ -66,20 +66,18 @@
                 <label class="form-check-label" for="required-{{ rowIdx }}-{{ fieldIdx }}">Required</label>
               </div>
 
+              @if (field.inputType === 'number') {
               <div class="form-check mt-2">
                 <input type="checkbox" class="form-check-input" id="numberValidation-{{ rowIdx }}-{{ fieldIdx }}"
-                [(ngModel)]="field.validateNumber" />
+                  [(ngModel)]="field.validateNumber" />
                 <label class="form-check-label" for="numberValidation-{{ rowIdx }}-{{ fieldIdx }}">Number Validation</label>
                 @if (field.validateNumber) {
-                  <input type="text" class="form-control"
-                    id="numberValidation-{{ rowIdx }}-{{ fieldIdx }}"
-                    [(ngModel)]="field.numberValidation"
-                    placeholder="Enter Number Format Ex 00.0"
-                    pattern="^\d*\.?\d*$"
-                    title="Only numbers and a single dot are allowed"
-                    (keypress)="validateNumberInput($event)" />
+                <input type="text" class="form-control" id="numberValidation-{{ rowIdx }}-{{ fieldIdx }}"
+                  [(ngModel)]="field.numberValidation" placeholder="Enter Number Format Ex 00.0" pattern="^\d*\.?\d*$"
+                  title="Only numbers and a single dot are allowed" (keypress)="validateNumberInput($event)" />
                 }
               </div>
+              }
 
               <!-- Add this in your field options section for dropdown fields -->
               <div *ngIf="field.inputType === 'dropdown'" class="form-check mt-2">

@@ -30,8 +30,8 @@
                   <ng-container [ngSwitch]="field.value.inputType">
                     <input *ngSwitchCase="'text'" type="text" class="form-control" formControlName="value"
                       placeholder="Enter text" />
-                    <input *ngSwitchCase="'number'" type="number" class="form-control" formControlName="value"
-                      placeholder="Enter a number" />
+                    <input *ngSwitchCase="'number'" type="text" class="form-control" formControlName="value"
+                      placeholder="Enter a number" (keypress)="validateNumberInput($event)"/>
                     <textarea *ngSwitchCase="'textarea'" type="value" class="form-control"
                       formControlName="value"></textarea>
                     <input *ngSwitchCase="'email'" type="email" class="form-control" formControlName="value"
