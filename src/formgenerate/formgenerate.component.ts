@@ -259,15 +259,21 @@ isRowVisible(rowIndex: number): boolean {
       const context: { [key: string]: any } = {};
 
       // Extract all field references (text within single quotes)
-      const fieldReferences = visibilityCondition.match(/'([^']+)'/g) || [];
+      const fieldReferences: string[] = visibilityCondition.match(/'([^']+)'/g) || [];
+      const uniqueFieldReferences = [...new Set(fieldReferences)]; // Avoid duplicates
 
-      console.log(`Field references: ${fieldReferences}`);
+      console.log(`Field references: ${uniqueFieldReferences}`);
 
       // For each referenced field, set up the corresponding value in the context
-      for (const ref of fieldReferences) {
+      for (const ref of uniqueFieldReferences) {
         const fieldName = ref.replace(/'/g, '');
 
-        // Find the field with this label
+        if (!this.checkIfFieldExists(fieldName)) {
+          console.log(`Field "${fieldName}" does not exist, treated as literal.`);
+          continue; // Skip replacement for literals
+        }
+
+        // Find the field value
         let fieldValue = null;
         this.additionalFields.controls.forEach((row, rowIndex) => {
           const fields = row.get('fields') as FormArray;
@@ -278,26 +284,41 @@ isRowVisible(rowIndex: number): boolean {
 
               // Handle array values for checkboxes or multi-select fields
               if (Array.isArray(fieldValue)) {
-                fieldValue = fieldValue.join(', '); // Convert array to string
+                // Keep the value as an array for evaluation
+                context[fieldName] = fieldValue;
+              } else {
+                context[fieldName] = fieldValue;
               }
             }
           });
         });
 
         console.log(`Field "${fieldName}" value:`, fieldValue);
-
-        // Store the value in the context
-        context[fieldName] = fieldValue;
       }
 
       console.log(`Context for evaluation:`, context);
 
       // Replace field references in the condition with their values
       let parsedCondition = visibilityCondition;
-      for (const ref of fieldReferences) {
+      for (const ref of uniqueFieldReferences) {
         const fieldName = ref.replace(/'/g, '');
-        const fieldValue = context[fieldName];
-        parsedCondition = parsedCondition.replace(new RegExp(`'${fieldName}'`, 'g'), `'${fieldValue}'`);
+        if (this.checkIfFieldExists(fieldName)) {
+          const fieldValue = context[fieldName];
+
+          // Handle array values
+          if (Array.isArray(fieldValue)) {
+            // Replace the field reference with a check for any matching value
+            parsedCondition = parsedCondition.replace(
+              new RegExp(`'${fieldName}'`, 'g'),
+              `(${fieldValue.map(val => `'${val}'`).join(' || ')})`
+            );
+          } else {
+            // Replace with the field value (non-array)
+            const replacement = fieldValue !== null && fieldValue !== undefined ? `'${fieldValue}'` : 'null';
+            parsedCondition = parsedCondition.replace(new RegExp(`'${fieldName}'`, 'g'), replacement);
+          }
+        }
+        // Else, leave the ref as-is (literal)
       }
 
       console.log(`Parsed condition: ${parsedCondition}`);
@@ -309,19 +330,33 @@ isRowVisible(rowIndex: number): boolean {
       return result;
     } catch (error) {
       console.error('Error evaluating visibility condition:', error);
-      // If there's an error, default to showing the field
       return true;
     }
+  }
+
+  // Helper method to check if a field exists
+  checkIfFieldExists(fieldName: string): boolean {
+    let exists = false;
+    this.additionalFields.controls.forEach(row => {
+      const fields = row.get('fields') as FormArray;
+      fields.controls.forEach(fieldControl => {
+        const fieldGroup = fieldControl as FormGroup;
+        if (fieldGroup.get('label')?.value === fieldName) {
+          exists = true;
+        }
+      });
+    });
+    return exists;
   }
 
   // Helper method to safely evaluate the condition
   evaluateCondition(condition: string): boolean {
     try {
-      // Use a safe evaluation method (e.g., a simple parser or library)
+      // Use a safe evaluation method
       return new Function(`return ${condition}`)();
     } catch (error) {
       console.error('Error evaluating condition:', error);
-      return true; // Default to showing the field if there's an error
+      return true;
     }
   }
   onSingleDropdownChange(event: Event, rowIndex: number, fieldIndex: number, option: string): void {
