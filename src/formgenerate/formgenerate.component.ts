@@ -307,20 +307,16 @@ isRowVisible(rowIndex: number): boolean {
 
           // Handle array values
           if (Array.isArray(fieldValue)) {
-            // Check if the condition contains && or ||
-            if (visibilityCondition.includes('&&')) {
-              // For && conditions, ensure ALL required values are present
-              parsedCondition = parsedCondition.replace(
-                new RegExp(`'${fieldName}' == '([^']+)'`, 'g'),
-                (match:any, value:any) => `context['${fieldName}'].includes('${value}')`
-              );
-            } else {
-              // For || conditions, ensure ANY value is present
-              parsedCondition = parsedCondition.replace(
-                new RegExp(`'${fieldName}' == '([^']+)'`, 'g'),
-                (match:any, value:any) => `context['${fieldName}'].includes('${value}')`
-              );
-            }
+            // Replace == conditions
+            parsedCondition = parsedCondition.replace(
+              new RegExp(`'${fieldName}' == '([^']+)'`, 'g'),
+              (match:any, value:any) => `context['${fieldName}'].includes('${value}')`
+            );
+            // Replace != conditions
+            parsedCondition = parsedCondition.replace(
+              new RegExp(`'${fieldName}' != '([^']+)'`, 'g'),
+              (match:any, value:any) => `!context['${fieldName}'].includes('${value}')`
+            );
           } else {
             // Replace with the field value (non-array)
             const replacement = fieldValue !== null && fieldValue !== undefined ? `'${fieldValue}'` : 'null';
