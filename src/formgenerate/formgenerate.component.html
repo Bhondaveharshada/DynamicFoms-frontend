@@ -32,9 +32,6 @@
                       placeholder="Enter text" />
                     <input *ngSwitchCase="'number'" type="text" class="form-control" formControlName="value"
                       placeholder="Enter a number" (keypress)="validateNumberInput($event)"/>
-                      <div *ngIf="field.get('validationWarning')?.value" class="text-warning mt-2">
-                        <small>{{ field.get('validationWarning')?.value }}</small>
-                    </div>
                     <textarea *ngSwitchCase="'textarea'" type="value" class="form-control"
                       formControlName="value"></textarea>
                     <input *ngSwitchCase="'email'" type="email" class="form-control" formControlName="value"
@@ -114,8 +111,18 @@
                   </ng-container>
 
                   <!-- Error Messages -->
+                  <div *ngIf="field.get('validationWarning')?.value" class="text-warning mt-2">
+                    <small>{{ field.get('validationWarning')?.value }}</small>
+                </div>
 
                   <div *ngIf="field.get('value')?.touched && field.get('value')?.invalid" class="text-danger mt-2">
+                    <small *ngIf="field.get('value')?.errors?.['invalidStartDate']">
+                      ⚠ Start date is greater than end date.
+                    </small>
+                    <small *ngIf="field.get('value')?.errors?.['invalidEndDate']">
+                      ⚠ End date is less than start date.
+                    </small>
+
                     <small *ngIf="field.get('value')?.errors?.['required']">This field is required.</small>
                     <small *ngIf="field.get('value')?.errors?.['email']">Please enter a valid email address.</small>
                     <small *ngIf="field.get('value')?.errors?.['pattern']">

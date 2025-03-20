@@ -16,10 +16,13 @@ interface Field {
   validateNumber: boolean;
   softValidation: boolean;
   numberValidation: string | null;
+  dateValidation: boolean;
+  dateFieldType: string | null;
   options: string[];
   allowMultipleSelection?: boolean;
   hasVisibilityCondition: boolean;
   visibilityCondition: string | null;
+
 }
 
 interface FormRow {
@@ -75,8 +78,17 @@ export class DragdropComponent {
   // Update the drop method to use the new createNewField method
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
+      // **Reordering fields within the same row**
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+
+      // Extract row index from container ID
+      const containerIdMatch = event.container.id.match(/field-list-(\d+)/);
+      if (containerIdMatch) {
+        const rowIdx = parseInt(containerIdMatch[1], 10);
+        this.updateDateFieldTypes(rowIdx); // Update start/end date logic
+      }
     } else {
+      // **Dragging a new field into a row**
       const draggedFieldType = event.item.data;
 
       if (event.container.id === 'new-row-placeholder') {
@@ -90,6 +102,7 @@ export class DragdropComponent {
 
           if (targetRowIndex >= 0 && targetRowIndex < this.additionalFields.length) {
             this.additionalFields[targetRowIndex].fields.push(this.createNewField(draggedFieldType));
+            this.updateDateFieldTypes(targetRowIndex); // Ensure correct start/end date
           }
         }
       }
@@ -98,17 +111,18 @@ export class DragdropComponent {
     }
   }
 
+
   // Updated showFieldPicker method to better handle building expressions
   showFieldPicker(rowIdx: number, fieldIdx: number) {
     // Get the current visibility condition (if any)
     const currentCondition = this.additionalFields[rowIdx].fields[fieldIdx].visibilityCondition || '';
-    
+
     // Create a list of available fields excluding the current field
     const availableFields = this.getAllFieldsExcept(rowIdx, fieldIdx);
-    
+
     // Create a formatted HTML string for the Swal dialog
     const fieldsHtml = this.formatFieldsForDialog(availableFields);
-    
+
     // Create a UI that helps users build conditions
     Swal.fire({
       title: 'Build Field Visibility Condition',
@@ -118,7 +132,7 @@ export class DragdropComponent {
           <input id="condition-expression" class="form-control" value="${currentCondition}">
           <small class="text-muted">Example: 'Gender' == 'Male' && 'Subscribe' == true</small>
         </div>
-        
+
         <div class="mb-3">
           <div class="btn-group mb-2">
             <button class="btn btn-sm btn-outline-secondary insert-operator" data-op="&&">AND (&&)</button>
@@ -127,7 +141,7 @@ export class DragdropComponent {
             <button class="btn btn-sm btn-outline-secondary insert-operator" data-op="!=">NOT EQUALS (!=)</button>
           </div>
         </div>
-        
+
         <div class="form-fields-list border p-2" style="max-height: 300px; overflow-y: auto;">
           <h6>Available Fields:</h6>
           ${fieldsHtml}
@@ -143,33 +157,33 @@ export class DragdropComponent {
             const target = e.target as HTMLElement;
             const operator = target.getAttribute('data-op');
             const conditionInput = document.getElementById('condition-expression') as HTMLInputElement;
-            
+
             // Add a space before and after the operator
             conditionInput.value += ` ${operator} `;
             conditionInput.focus();
           });
         });
-        
+
         // Set up handlers for field buttons
         document.querySelectorAll('.field-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const target = e.target as HTMLElement;
             const fieldName = target.getAttribute('data-field');
             const conditionInput = document.getElementById('condition-expression') as HTMLInputElement;
-            
+
             // Insert field name at cursor position
             conditionInput.value += `'${fieldName}'`;
             conditionInput.focus();
           });
         });
-        
+
         // Set up handlers for option buttons
         document.querySelectorAll('.option-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const target = e.target as HTMLElement;
             const optionValue = target.getAttribute('data-option');
             const conditionInput = document.getElementById('condition-expression') as HTMLInputElement;
-            
+
             // Insert option value at cursor position
             conditionInput.value += `'${optionValue}'`;
             conditionInput.focus();
@@ -193,7 +207,7 @@ export class DragdropComponent {
   // Helper method to get all fields except the current one
   getAllFieldsExcept(currentRowIdx: number, currentFieldIdx: number): Array<{label: string, inputType: string, options?: string[]}> {
     const fields: Array<{label: string, inputType: string, options?: string[]}> = [];
-    
+
     this.additionalFields.forEach((row, rowIdx) => {
       row.fields.forEach((field, fieldIdx) => {
         // Skip the current field and fields without labels
@@ -206,18 +220,18 @@ export class DragdropComponent {
         }
       });
     });
-    
+
     return fields;
   }
 
   // Improved formatFieldsForDialog to better support building expressions
   formatFieldsForDialog(fields: Array<{label: string, inputType: string, options?: string[]}>): string {
     let html = '';
-    
+
     if (fields.length === 0) {
       return '<div class="alert alert-info">No other fields available for conditions.</div>';
     }
-    
+
     fields.forEach(field => {
       html += `
         <div class="card mb-2">
@@ -227,12 +241,12 @@ export class DragdropComponent {
             </button>
           </div>
       `;
-      
+
       // If the field has options, show them for selection
-      if ((field.inputType === 'checkbox' || field.inputType === 'radio' || field.inputType === 'dropdown') && 
+      if ((field.inputType === 'checkbox' || field.inputType === 'radio' || field.inputType === 'dropdown') &&
           field.options && field.options.length > 0) {
         html += `<div class="card-body py-2">`;
-        
+
         field.options.forEach(option => {
           if (option.trim()) {
             html += `
@@ -242,10 +256,10 @@ export class DragdropComponent {
             `;
           }
         });
-        
+
         html += `</div>`;
       }
-      
+
       // For checkbox, add true/false options
       if (field.inputType === 'checkbox') {
         html += `
@@ -256,10 +270,10 @@ export class DragdropComponent {
           </div>
         `;
       }
-      
+
       html += `</div>`;
     });
-    
+
     return html;
   }
 
@@ -290,7 +304,9 @@ export class DragdropComponent {
       options: inputType === 'checkbox' || inputType === 'radio' || inputType === 'dropdown' ? [] : [],
       allowMultipleSelection: inputType === 'dropdown' ? false : undefined,
       hasVisibilityCondition: false,
-      visibilityCondition: null
+      visibilityCondition: null,
+      dateValidation: false,
+      dateFieldType:null,
     };
   }
 
@@ -323,6 +339,27 @@ export class DragdropComponent {
 
     console.log('Added new row. Total rows:', this.additionalFields.length);
   }
+
+  hasAnotherDateField(rowIdx: number, fieldIdx: number): boolean {
+    const row = this.additionalFields[rowIdx]; // Get the current row
+    return row.fields.some((f, idx) => f.inputType === 'date' && idx !== fieldIdx);
+  }
+
+  updateDateFieldTypes(rowIdx: number): void {
+    const row = this.additionalFields[rowIdx]; // Get the current row
+    const dateFields = row.fields
+      .filter(f => f.inputType === 'date' && f.dateValidation) // Filter only date fields with validation checked
+      .sort((a, b) => row.fields.indexOf(a) - row.fields.indexOf(b)); // Ensure correct order after drag-and-drop
+
+    if (dateFields.length === 2) {
+      dateFields[0].dateFieldType = 'start';
+      dateFields[1].dateFieldType = 'end';
+    } else {
+      // Reset dateFieldType if there are not exactly 2 date fields selected
+      dateFields.forEach(field => (field.dateFieldType = null));
+    }
+  }
+
 
   /** Removes a Specific Field */
   removeField(rowIdx: number, fieldIdx: number) {
@@ -406,17 +443,17 @@ export class DragdropComponent {
     try {
       // Parse the condition to create a proper function
       let condition = field.visibilityCondition;
-      
+
       // Create a context object for evaluation
       const context: {[key: string]: any} = {};
-      
+
       // Extract all field references (text within single quotes)
       const fieldReferences = condition.match(/'([^']+)'/g) || [];
-      
+
       // For each referenced field, set up the corresponding value in the context
       for (const ref of fieldReferences) {
         const fieldName = ref.replace(/'/g, '');
-        
+
         // Find the field with this label
         let fieldValue = null;
         for (const rowKey in formValues) {
@@ -426,14 +463,14 @@ export class DragdropComponent {
             break;
           }
         }
-        
+
         // Replace all instances of this field reference with its value accessor
         condition = condition.replace(new RegExp(`'${fieldName}'`, 'g'), `context['${fieldName}']`);
-        
+
         // Store the value in the context
         context[fieldName] = fieldValue;
       }
-      
+
       // Create and execute the evaluation function
       const evaluator = new Function('context', `
         try {
@@ -443,7 +480,7 @@ export class DragdropComponent {
           return true;
         }
       `);
-      
+
       return evaluator(context);
     } catch (error) {
       console.error('Error evaluating visibility condition:', error);
@@ -473,6 +510,8 @@ export class DragdropComponent {
           validateNumber: field.validateNumber,
           softValidation: field.softValidation,
           numberValidation: field.numberValidation,
+          dateValidation: field.dateValidation,
+          dateFieldType: field.dateFieldType,
           options: field.options || [],
           allowMultipleSelection: field.inputType === 'dropdown' ? field.allowMultipleSelection : undefined,
           hasVisibilityCondition: field.hasVisibilityCondition || false,
@@ -494,7 +533,7 @@ export class DragdropComponent {
       didOpen: () => Swal.showLoading()
     });
 
-    this.formService.addFormFields(formData, formId).subscribe({
+     this.formService.addFormFields(formData, formId).subscribe({
       next: (res: any) => {
         Swal.close();
         console.log('Form saved successfully:', res);

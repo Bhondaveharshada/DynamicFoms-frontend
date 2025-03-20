@@ -21,7 +21,7 @@ interface Field {
   validateNumber?: boolean;
   numberValidation?: string;
   softValidation?: boolean;
-  validationWarning?: string | null;  
+  validationWarning?: string | null;
   hasVisibilityCondition: boolean;
   visibilityCondition: string | null;
 }
@@ -68,7 +68,7 @@ export class FormgenerateComponent {
 
     this.fetchPatientData();
 
-    
+
   // Add this block to listen for form value changes and re-evaluate visibility conditions
   if (this.previewForm) {
     this.previewForm.valueChanges.subscribe(() => {
@@ -86,7 +86,7 @@ export class FormgenerateComponent {
         } else {
           fieldControl.get('value')?.clearValidators();
         }
-        fieldControl.get('value')?.updateValueAndValidity(); 
+        fieldControl.get('value')?.updateValueAndValidity();
       });
     });
   }
@@ -95,72 +95,78 @@ export class FormgenerateComponent {
       next: (response: any) => {
         this.formData = response.result;
         console.log("this.formData : ", this.formData);
-  
+
         this.fields = response.result.additionalFields.map((field: any) => field);
         this.previewForm = this.fb.group({
           title: [this.formData.title, Validators.required],
           additionalFields: this.fb.array(
-            this.formData.additionalFields.map((row: any) =>
-              this.fb.group({
-                fields: this.fb.array(
-                  row.fields.map((field: any) => {
-                    const dynamicValidators = this.getDynamicValidators(field);
-                    const control = new FormControl(
-                      field.value || '',
-                      dynamicValidators.length > 0 ? Validators.compose(dynamicValidators) : null
-                    );
-  
-                    if (field.inputType === 'number' && field.validateNumber && field.softValidation) {
-                      const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-                      const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
-                      const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
-  
-                      const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
-  
-                      control.valueChanges.subscribe(value => {
-                        const fieldGroup = control.parent;
-                        if (fieldGroup) {
-                          if (value && !regexPattern.test(value)) {
-                            fieldGroup.get('validationWarning')?.setValue(`⚠ Value does not match expected format: ${field.numberValidation}`, { emitEvent: false });
-                          } else {
-                            fieldGroup.get('validationWarning')?.setValue(null, { emitEvent: false });
-                          }
+            this.formData.additionalFields.map((row: any) => {
+              const fieldsArray = this.fb.array(
+                row.fields.map((field: any) => {
+                  const dynamicValidators = this.getDynamicValidators(field);
+                  const control = new FormControl(
+                    field.value || '',
+                    dynamicValidators.length > 0 ? Validators.compose(dynamicValidators) : null
+                  );
+
+                  if (field.inputType === 'number' && field.validateNumber && field.softValidation) {
+                    const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
+                    const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
+                    const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
+
+                    const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
+
+                    control.valueChanges.subscribe(value => {
+                      const fieldGroup = control.parent;
+                      if (fieldGroup) {
+                        if (value && !regexPattern.test(value)) {
+                          fieldGroup.get('validationWarning')?.setValue(`⚠ Value does not match expected format: ${field.numberValidation}`, { emitEvent: false });
+                        } else {
+                          fieldGroup.get('validationWarning')?.setValue(null, { emitEvent: false });
                         }
-                      });
-                    }
-  
-                    return this.fb.group({
-                      id: [field.id || this.generateUniqueId(), Validators.required],
-                      label: [field.label, Validators.required],
-                      value: control,
-                      inputType: [field.inputType, Validators.required],
-                      isrequired: [field.isrequired],
-                      options: [Array.isArray(field.options) ? field.options : []],
-                      allowMultipleSelection: [field.allowMultipleSelection === true],
-                      isOpen: [false],
-                      validateNumber: field.validateNumber,
-                      numberValidation: field.numberValidation,
-                      softValidation: field.softValidation,
-                      validationWarning: [null],
-                      hasVisibilityCondition: [field.hasVisibilityCondition || false],
-                      visibilityCondition: [field.visibilityCondition || null],
-                      isVisible: [true] // Default visibility to true
+                      }
                     });
-                  })
-                )
-              })
-            )
+                  }
+
+                  const fieldGroup = this.fb.group({
+                    id: [field.id || this.generateUniqueId(), Validators.required],
+                    label: [field.label, Validators.required],
+                    value: control,
+                    inputType: [field.inputType, Validators.required],
+                    isrequired: [field.isrequired],
+                    options: [Array.isArray(field.options) ? field.options : []],
+                    allowMultipleSelection: [field.allowMultipleSelection === true],
+                    isOpen: [false],
+                    validateNumber: field.validateNumber,
+                    numberValidation: field.numberValidation,
+                    softValidation: field.softValidation,
+                    validationWarning: [null],
+                    hasVisibilityCondition: [field.hasVisibilityCondition || false],
+                    visibilityCondition: [field.visibilityCondition || null],
+                    isVisible: [true], // Default visibility to true
+                    dateValidation: [field.dateValidation || false],
+                    dateFieldType: [field.dateFieldType || null]
+                  });
+
+                  return fieldGroup;
+                })
+              );
+
+              this.assignDateFieldTypes(fieldsArray); // Assign Start/End validation
+
+              return this.fb.group({ fields: fieldsArray });
+            })
           ),
         });
-  
+
         // Evaluate visibility conditions after form initialization
         this.evaluateVisibilityConditions();
-  
+
         // Listen for changes in additionalFields to apply validators and re-evaluate visibility
         this.previewForm?.get('additionalFields')?.valueChanges.subscribe(() => {
           this.evaluateVisibilityConditions();
         });
-  
+
         this.previewForm.updateValueAndValidity();
         console.log("Form Errors 0:", this.previewForm.get('additionalFields.0.fields.0.value')?.errors);
         console.log("preview forms 0 : ", this.previewForm.valid, this.previewForm.value);
@@ -169,19 +175,60 @@ export class FormgenerateComponent {
         console.error("Error fetching fields", err);
       },
     });
+}
+
+
+
+  assignDateFieldTypes(fieldsArray: FormArray) {
+    const dateFields = fieldsArray.controls
+      .filter((control: any) => control.value.inputType === 'date' && control.value.dateValidation);
+
+    if (dateFields.length === 2) {
+      dateFields[0].get('dateFieldType')?.setValue('start');
+      dateFields[1].get('dateFieldType')?.setValue('end');
+
+      // Apply validation
+      this.applyDateValidation(dateFields[0], dateFields[1]);
+    }
   }
+
+
+  applyDateValidation(startField: AbstractControl, endField: AbstractControl) {
+    startField.get('value')?.valueChanges.subscribe(startDate => {
+      const endDate = endField.get('value')?.value;
+
+      if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+        startField.get('value')?.setErrors({ invalidStartDate: '⚠ Start date is greater than end date' });
+      } else {
+        startField.get('value')?.setErrors(null); // Clear the error
+      }
+    });
+
+    endField.get('value')?.valueChanges.subscribe(endDate => {
+      const startDate = startField.get('value')?.value;
+
+      if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+        endField.get('value')?.setErrors({ invalidEndDate: '⚠ End date less than start date' });
+      } else {
+        endField.get('value')?.setErrors(null); // Clear the error
+      }
+    });
+  }
+
+
+
 
   evaluateVisibilityConditions() {
     if (!this.previewForm) return;
-  
+
     const formValues = this.previewForm.value;
-  
+
     this.additionalFields.controls.forEach((row, rowIndex) => {
       const fields = row.get('fields') as FormArray;
       fields.controls.forEach((field, fieldIndex) => {
         const fieldGroup = field as FormGroup;
         const visibilityCondition = fieldGroup.get('visibilityCondition')?.value;
-  
+
         if (visibilityCondition) {
           const isVisible = this.evaluateVisibilityCondition(fieldGroup, formValues);
           console.log(`Field ${fieldGroup.get('label')?.value} visibility: ${isVisible}`); // Debugging
@@ -195,27 +242,27 @@ export class FormgenerateComponent {
 
   evaluateVisibilityCondition(field: FormGroup, formValues: any): boolean {
     const visibilityCondition = field.get('visibilityCondition')?.value;
-  
+
     if (!visibilityCondition) {
       console.log(`No visibility condition for field: ${field.get('label')?.value}`);
       return true; // No condition means the field is always visible
     }
-  
+
     console.log(`Evaluating visibility condition for field: ${field.get('label')?.value}`);
     console.log(`Condition: ${visibilityCondition}`);
-  
+
     try {
       const context: { [key: string]: any } = {};
-  
+
       // Extract all field references (text within single quotes)
       const fieldReferences = visibilityCondition.match(/'([^']+)'/g) || [];
-  
+
       console.log(`Field references: ${fieldReferences}`);
-  
+
       // For each referenced field, set up the corresponding value in the context
       for (const ref of fieldReferences) {
         const fieldName = ref.replace(/'/g, '');
-  
+
         // Find the field with this label
         let fieldValue = null;
         this.additionalFields.controls.forEach((row, rowIndex) => {
@@ -224,7 +271,7 @@ export class FormgenerateComponent {
             const fieldGroup = fieldControl as FormGroup;
             if (fieldGroup.get('label')?.value === fieldName) {
               fieldValue = fieldGroup.get('value')?.value;
-  
+
               // Handle array values for checkboxes or multi-select fields
               if (Array.isArray(fieldValue)) {
                 fieldValue = fieldValue.join(', '); // Convert array to string
@@ -232,15 +279,15 @@ export class FormgenerateComponent {
             }
           });
         });
-  
+
         console.log(`Field "${fieldName}" value:`, fieldValue);
-  
+
         // Store the value in the context
         context[fieldName] = fieldValue;
       }
-  
+
       console.log(`Context for evaluation:`, context);
-  
+
       // Replace field references in the condition with their values
       let parsedCondition = visibilityCondition;
       for (const ref of fieldReferences) {
@@ -248,13 +295,13 @@ export class FormgenerateComponent {
         const fieldValue = context[fieldName];
         parsedCondition = parsedCondition.replace(new RegExp(`'${fieldName}'`, 'g'), `'${fieldValue}'`);
       }
-  
+
       console.log(`Parsed condition: ${parsedCondition}`);
-  
+
       // Evaluate the parsed condition
       const result = this.evaluateCondition(parsedCondition);
       console.log(`Evaluation result for field "${field.get('label')?.value}":`, result);
-  
+
       return result;
     } catch (error) {
       console.error('Error evaluating visibility condition:', error);
@@ -262,7 +309,7 @@ export class FormgenerateComponent {
       return true;
     }
   }
-  
+
   // Helper method to safely evaluate the condition
   evaluateCondition(condition: string): boolean {
     try {
@@ -390,7 +437,8 @@ export class FormgenerateComponent {
     } else {
       // 🔥 Mark all fields as touched to trigger error messages
       this.previewForm?.markAllAsTouched();
-      console.log("Form Errors:", this.previewForm?.get('additionalFields.0.fields.0.value')?.errors);
+      console.log("Form is Valid:", this.previewForm?.value);
+      console.log("Form Errors:", this.previewForm?.errors);
       alert("Invalid");
     }
     /* if (this.previewForm?.valid) {

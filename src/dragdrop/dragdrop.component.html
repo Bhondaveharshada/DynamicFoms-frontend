@@ -85,6 +85,36 @@
                   }
                 </div>
               }
+
+              @if (field.inputType === 'date') {
+                <div class="form-check mt-2">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="dateValidation-{{ rowIdx }}-{{ fieldIdx }}"
+                    [(ngModel)]="field.dateValidation"
+                    [disabled]="!hasAnotherDateField(rowIdx, fieldIdx)"
+                    (change)="updateDateFieldTypes(rowIdx)"
+                  />
+                  <label class="form-check-label" for="dateValidation-{{ rowIdx }}-{{ fieldIdx }}">Date Validation</label>
+
+                  <div *ngIf="!hasAnotherDateField(rowIdx, fieldIdx)" class="text-danger">
+                    Another date field is required in the same row for validation.
+                  </div>
+
+                  @if (field.dateValidation) {
+                    <div>
+                      <label class="form-label">This Field is </label>
+                      <mat-button-toggle-group name="fontStyle" aria-label="Validation Type" [(ngModel)]="field.dateFieldType">
+                        <mat-button-toggle value='start'>Start Date</mat-button-toggle>
+                        <mat-button-toggle value="end">End Date</mat-button-toggle>
+                      </mat-button-toggle-group>
+                    </div>
+                  }
+                </div>
+              }
+
+
               <!-- Add this after the number validation section -->
               <div class="form-check mt-2">
                 <input type="checkbox" class="form-check-input" id="visibilityCondition-{{ rowIdx }}-{{ fieldIdx }}"
