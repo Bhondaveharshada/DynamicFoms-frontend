@@ -307,11 +307,20 @@ isRowVisible(rowIndex: number): boolean {
 
           // Handle array values
           if (Array.isArray(fieldValue)) {
-            // Replace the field reference with a check for any matching value
-            parsedCondition = parsedCondition.replace(
-              new RegExp(`'${fieldName}'`, 'g'),
-              `(${fieldValue.map(val => `'${val}'`).join(' || ')})`
-            );
+            // Check if the condition contains && or ||
+            if (visibilityCondition.includes('&&')) {
+              // For && conditions, ensure ALL required values are present
+              parsedCondition = parsedCondition.replace(
+                new RegExp(`'${fieldName}' == '([^']+)'`, 'g'),
+                (match:any, value:any) => `context['${fieldName}'].includes('${value}')`
+              );
+            } else {
+              // For || conditions, ensure ANY value is present
+              parsedCondition = parsedCondition.replace(
+                new RegExp(`'${fieldName}' == '([^']+)'`, 'g'),
+                (match:any, value:any) => `context['${fieldName}'].includes('${value}')`
+              );
+            }
           } else {
             // Replace with the field value (non-array)
             const replacement = fieldValue !== null && fieldValue !== undefined ? `'${fieldValue}'` : 'null';
@@ -324,7 +333,7 @@ isRowVisible(rowIndex: number): boolean {
       console.log(`Parsed condition: ${parsedCondition}`);
 
       // Evaluate the parsed condition
-      const result = this.evaluateCondition(parsedCondition);
+      const result = this.evaluateCondition(parsedCondition, context);
       console.log(`Evaluation result for field "${field.get('label')?.value}":`, result);
 
       return result;
@@ -350,10 +359,10 @@ isRowVisible(rowIndex: number): boolean {
   }
 
   // Helper method to safely evaluate the condition
-  evaluateCondition(condition: string): boolean {
+  evaluateCondition(condition: string, context: { [key: string]: any }): boolean {
     try {
       // Use a safe evaluation method
-      return new Function(`return ${condition}`)();
+      return new Function('context', `return ${condition}`)(context);
     } catch (error) {
       console.error('Error evaluating condition:', error);
       return true;
