@@ -75,20 +75,16 @@ export class DragdropComponent {
     return classes;
   }
 
-  // Update the drop method to use the new createNewField method
+
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
-      // **Reordering fields within the same row**
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-
-      // Extract row index from container ID
       const containerIdMatch = event.container.id.match(/field-list-(\d+)/);
       if (containerIdMatch) {
         const rowIdx = parseInt(containerIdMatch[1], 10);
-        this.updateDateFieldTypes(rowIdx); // Update start/end date logic
+        this.updateDateFieldTypes(rowIdx); 
       }
     } else {
-      // **Dragging a new field into a row**
       const draggedFieldType = event.item.data;
 
       if (event.container.id === 'new-row-placeholder') {
@@ -102,7 +98,7 @@ export class DragdropComponent {
 
           if (targetRowIndex >= 0 && targetRowIndex < this.additionalFields.length) {
             this.additionalFields[targetRowIndex].fields.push(this.createNewField(draggedFieldType));
-            this.updateDateFieldTypes(targetRowIndex); // Ensure correct start/end date
+            this.updateDateFieldTypes(targetRowIndex); 
           }
         }
       }
@@ -111,19 +107,10 @@ export class DragdropComponent {
     }
   }
 
-
-  // Updated showFieldPicker method to better handle building expressions
   showFieldPicker(rowIdx: number, fieldIdx: number) {
-    // Get the current visibility condition (if any)
     const currentCondition = this.additionalFields[rowIdx].fields[fieldIdx].visibilityCondition || '';
-
-    // Create a list of available fields excluding the current field
     const availableFields = this.getAllFieldsExcept(rowIdx, fieldIdx);
-
-    // Create a formatted HTML string for the Swal dialog
     const fieldsHtml = this.formatFieldsForDialog(availableFields);
-
-    // Create a UI that helps users build conditions
     Swal.fire({
       title: 'Build Field Visibility Condition',
       html: `
@@ -151,66 +138,53 @@ export class DragdropComponent {
       confirmButtonText: 'Apply Condition',
       width: '600px',
       didOpen: () => {
-        // Set up handlers for the operator buttons
         document.querySelectorAll('.insert-operator').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const target = e.target as HTMLElement;
             const operator = target.getAttribute('data-op');
             const conditionInput = document.getElementById('condition-expression') as HTMLInputElement;
-
-            // Add a space before and after the operator
             conditionInput.value += ` ${operator} `;
             conditionInput.focus();
           });
         });
-
-        // Set up handlers for field buttons
         document.querySelectorAll('.field-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const target = e.target as HTMLElement;
             const fieldName = target.getAttribute('data-field');
             const conditionInput = document.getElementById('condition-expression') as HTMLInputElement;
-
-            // Insert field name at cursor position
             conditionInput.value += `'${fieldName}'`;
             conditionInput.focus();
           });
         });
 
-        // Set up handlers for option buttons
         document.querySelectorAll('.option-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const target = e.target as HTMLElement;
             const optionValue = target.getAttribute('data-option');
             const conditionInput = document.getElementById('condition-expression') as HTMLInputElement;
-
-            // Insert option value at cursor position
             conditionInput.value += `'${optionValue}'`;
             conditionInput.focus();
           });
         });
       },
       preConfirm: () => {
-        // Get the final condition and save it
         const conditionInput = document.getElementById('condition-expression') as HTMLInputElement;
         return conditionInput.value;
       }
     }).then((result) => {
       if (result.isConfirmed) {
-        // Update the visibility condition in the form
         this.additionalFields[rowIdx].fields[fieldIdx].visibilityCondition = result.value as string;
         this.cdr.detectChanges();
       }
     });
   }
 
-  // Helper method to get all fields except the current one
+ 
   getAllFieldsExcept(currentRowIdx: number, currentFieldIdx: number): Array<{label: string, inputType: string, options?: string[]}> {
     const fields: Array<{label: string, inputType: string, options?: string[]}> = [];
 
     this.additionalFields.forEach((row, rowIdx) => {
       row.fields.forEach((field, fieldIdx) => {
-        // Skip the current field and fields without labels
         if (!(rowIdx === currentRowIdx && fieldIdx === currentFieldIdx) && field.label?.trim()) {
           fields.push({
             label: field.label,
@@ -224,7 +198,6 @@ export class DragdropComponent {
     return fields;
   }
 
-  // Improved formatFieldsForDialog to better support building expressions
   formatFieldsForDialog(fields: Array<{label: string, inputType: string, options?: string[]}>): string {
     let html = '';
 
@@ -242,7 +215,6 @@ export class DragdropComponent {
           </div>
       `;
 
-      // If the field has options, show them for selection
       if ((field.inputType === 'checkbox' || field.inputType === 'radio' || field.inputType === 'dropdown') &&
           field.options && field.options.length > 0) {
         html += `<div class="card-body py-2">`;
@@ -260,7 +232,6 @@ export class DragdropComponent {
         html += `</div>`;
       }
 
-      // For checkbox, add true/false options
       if (field.inputType === 'checkbox') {
         html += `
           <div class="card-body py-2">
@@ -280,8 +251,6 @@ export class DragdropComponent {
   validateNumberInput(event: KeyboardEvent) {
     const allowedChars = /[0-9.]/
     const inputChar = String.fromCharCode(event.keyCode);
-
-    // Prevent multiple dots
     if (inputChar === '.' && (event.target as HTMLInputElement).value.includes('.')) {
       event.preventDefault();
     }
@@ -291,7 +260,6 @@ export class DragdropComponent {
     }
   }
 
-  // Update the field initialization to include visibility properties and soft validation
   private createNewField(inputType: string): Field {
     return {
       id: this.generateFieldId(),
@@ -320,7 +288,6 @@ export class DragdropComponent {
     });
   }
 
-  // Update the addField method to use the new createNewField method
   addField(rowIndex: number) {
     if (rowIndex >= 0 && rowIndex < this.additionalFields.length) {
       const newField = this.createNewField('text');
@@ -330,7 +297,6 @@ export class DragdropComponent {
     this.updateRowClasses();
   }
 
-  // Update the addNewRow method to use the new createNewField method
   addNewRow() {
     const newField = this.createNewField('text');
     const newRow: FormRow = { fields: [newField] };
@@ -341,31 +307,27 @@ export class DragdropComponent {
   }
 
   hasAnotherDateField(rowIdx: number, fieldIdx: number): boolean {
-    const row = this.additionalFields[rowIdx]; // Get the current row
+    const row = this.additionalFields[rowIdx]; 
     return row.fields.some((f, idx) => f.inputType === 'date' && idx !== fieldIdx);
   }
 
   updateDateFieldTypes(rowIdx: number): void {
-    const row = this.additionalFields[rowIdx]; // Get the current row
+    const row = this.additionalFields[rowIdx]; 
     const dateFields = row.fields
-      .filter(f => f.inputType === 'date' && f.dateValidation) // Filter only date fields with validation checked
-      .sort((a, b) => row.fields.indexOf(a) - row.fields.indexOf(b)); // Ensure correct order after drag-and-drop
+      .filter(f => f.inputType === 'date' && f.dateValidation) 
+      .sort((a, b) => row.fields.indexOf(a) - row.fields.indexOf(b)); 
 
     if (dateFields.length === 2) {
       dateFields[0].dateFieldType = 'start';
       dateFields[1].dateFieldType = 'end';
     } else {
-      // Reset dateFieldType if there are not exactly 2 date fields selected
       dateFields.forEach(field => (field.dateFieldType = null));
     }
   }
 
-
-  /** Removes a Specific Field */
   removeField(rowIdx: number, fieldIdx: number) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length) {
       this.additionalFields[rowIdx].fields.splice(fieldIdx, 1);
-      // Remove the row if it's empty
       if (this.additionalFields[rowIdx].fields.length === 0) {
         this.additionalFields.splice(rowIdx, 1);
       }
@@ -374,19 +336,17 @@ export class DragdropComponent {
     this.updateRowClasses();
   }
 
-  /** Handles Field Type Change */
   onFieldTypeChange(rowIdx: number, fieldIdx: number, newType: string) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
         fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
       this.additionalFields[rowIdx].fields[fieldIdx].inputType = newType;
-      // Initialize options array for checkbox/radio
+     
       if (newType === 'checkbox' || newType === 'radio' || newType === 'dropdown') {
         this.additionalFields[rowIdx].fields[fieldIdx].options = [];
       }
     }
   }
 
-  /** Handles Label Change */
   onLabelChange(rowIdx: number, fieldIdx: number, newLabel: string) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
         fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
@@ -394,7 +354,6 @@ export class DragdropComponent {
     }
   }
 
-  /** Handles Required Checkbox */
   onRequiredChange(rowIdx: number, fieldIdx: number, isRequired: boolean) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
         fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
@@ -402,7 +361,6 @@ export class DragdropComponent {
     }
   }
 
-  /** Adds an Option (for Checkbox/Radio Fields) */
   addOption(rowIdx: number, fieldIdx: number) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
         fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length) {
@@ -413,7 +371,6 @@ export class DragdropComponent {
     }
   }
 
-  /** Removes an Option */
   removeOption(rowIdx: number, fieldIdx: number, optionIdx: number) {
     if (rowIdx >= 0 && rowIdx < this.additionalFields.length &&
         fieldIdx >= 0 && fieldIdx < this.additionalFields[rowIdx].fields.length &&
@@ -422,7 +379,6 @@ export class DragdropComponent {
     }
   }
 
-  /** Fetch All Forms */
   fetchForms() {
     this.formService.getAllFormFields().subscribe({
       next: (res: any) => {
@@ -433,28 +389,18 @@ export class DragdropComponent {
     });
   }
 
-  // Enhanced evaluateVisibilityCondition method to properly evaluate conditions
   evaluateVisibilityCondition(field: any, formValues: any): boolean {
-    // If there's no visibility condition, the field is always visible
     if (!field.hasVisibilityCondition || !field.visibilityCondition) {
       return true;
     }
 
     try {
-      // Parse the condition to create a proper function
       let condition = field.visibilityCondition;
-
-      // Create a context object for evaluation
       const context: {[key: string]: any} = {};
-
-      // Extract all field references (text within single quotes)
       const fieldReferences = condition.match(/'([^']+)'/g) || [];
 
-      // For each referenced field, set up the corresponding value in the context
       for (const ref of fieldReferences) {
         const fieldName = ref.replace(/'/g, '');
-
-        // Find the field with this label
         let fieldValue = null;
         for (const rowKey in formValues) {
           const fieldInfo = this.findFieldById(rowKey);
@@ -464,14 +410,11 @@ export class DragdropComponent {
           }
         }
 
-        // Replace all instances of this field reference with its value accessor
         condition = condition.replace(new RegExp(`'${fieldName}'`, 'g'), `context['${fieldName}']`);
 
-        // Store the value in the context
         context[fieldName] = fieldValue;
       }
 
-      // Create and execute the evaluation function
       const evaluator = new Function('context', `
         try {
           return ${condition};
@@ -484,21 +427,17 @@ export class DragdropComponent {
       return evaluator(context);
     } catch (error) {
       console.error('Error evaluating visibility condition:', error);
-      // If there's an error, default to showing the field
       return true;
     }
   }
 
-  // Update the onSave method to include visibility condition data and soft validation
   onSave(event: Event) {
     event.preventDefault();
     this.formSubmitted = true;
 
-    // Validate fields
     let isValid = true;
     const validationMessages: string[] = [];
 
-    // If validation passes, proceed to save the form
     const formData = {
       title: this.title,
       additionalFields: this.additionalFields.map(row => ({
@@ -520,12 +459,7 @@ export class DragdropComponent {
       }))
     };
 
-    // Log the exact data being sent to the server
-    console.log("Sending form data structure:", JSON.stringify(formData, null, 2));
-
     const formId = new Date().getTime();
-
-    // Show loading indicator
     Swal.fire({
       title: 'Saving...',
       text: 'Please wait',
@@ -536,7 +470,6 @@ export class DragdropComponent {
      this.formService.addFormFields(formData, formId).subscribe({
       next: (res: any) => {
         Swal.close();
-        console.log('Form saved successfully:', res);
         const id = res.result._id;
         this._id = id;
         this.formLink = `${window.location.origin}/form/${id}/${formId}`;
@@ -561,11 +494,9 @@ export class DragdropComponent {
 
   saveLink() {
     if (!this.formLink || !this._id) {
-      console.error('Missing form link or ID');
       return;
     }
 
-    // Show loading indicator
     const savingToast = Swal.mixin({
       toast: true,
       position: 'top-end',
@@ -576,10 +507,8 @@ export class DragdropComponent {
     this.formService.saveFormLink(this._id, this.formLink).subscribe({
       next: (res: any) => {
         this.isLinkSaved = true;
-        console.log('Link saved successfully:', res);
         savingToast.close();
 
-        // Show success toast
         Swal.mixin({
           toast: true,
           position: 'top-end',
@@ -588,10 +517,8 @@ export class DragdropComponent {
         }).fire({ title: 'Link saved successfully!', icon: 'success' });
       },
       error: (err: any) => {
-        console.error('Error saving link:', err);
         savingToast.close();
 
-        // Show error toast
         Swal.mixin({
           toast: true,
           position: 'top-end',
@@ -615,7 +542,6 @@ export class DragdropComponent {
     return null;
   }
 
-  /** Processes AI Prompt */
   processPrompt() {
     if (!this.prompt) return;
 
@@ -630,7 +556,7 @@ export class DragdropComponent {
         try {
           const parsedResponse = JSON.parse(this.promptResponse);
           if (parsedResponse && parsedResponse.additionalFields) {
-            // Ensure each field has an ID
+      
             parsedResponse.additionalFields.forEach((row: FormRow) => {
               row.fields.forEach((field: Field) => {
                 if (!field.id) {
@@ -644,19 +570,16 @@ export class DragdropComponent {
             throw new Error('Invalid response format');
           }
         } catch (error) {
-          console.error('Error parsing prompt response:', error);
           Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to parse the generated JSON structure.' });
         }
       },
       error: (err) => {
         Swal.close();
-        console.error('Error processing prompt:', err);
         Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred while processing the prompt.' });
       }
     });
   }
 
-  /** Resets the Form */
   resetForm() {
     this.title = '';
     this.additionalFields = [];

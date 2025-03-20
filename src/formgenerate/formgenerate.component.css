@@ -1,4 +1,4 @@
-/* General Styles */
+
 body {
   font-family: 'Roboto', Arial, sans-serif;
   background-color: #f5f5f5;
@@ -10,7 +10,6 @@ body {
   min-height: 100vh;
 }
 
-/* Styling the container */
 .container {
   max-width: 900px;
   margin: 2rem auto;
@@ -43,7 +42,6 @@ h2 {
   margin-bottom: 1.5rem;
 }
 
-/* Form Group Layout */
 form {
   margin: 0 auto;
 }
@@ -89,7 +87,6 @@ textarea.form-control:focus {
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
 }
 
-/* Error Message Styling */
 .text-danger {
   font-size: 0.875rem;
   margin-top: 0.5rem;
@@ -99,7 +96,6 @@ textarea.form-control:focus {
   margin-bottom: 0.25rem;
 }
 
-/* Button Styling */
 button {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
@@ -118,7 +114,6 @@ button.btn-primary:hover {
   background-color: #0056b3;
 }
 
-/* Layout & Spacing */
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -158,16 +153,13 @@ button.btn-primary:hover {
   }
 }
 
-/* Custom Margin for Card Body */
 .card-body {
   margin-left: 0;
 }
 
-/* Form Preview Styles */
 .form-preview {
   width: 90%;
   max-width: 800px;
-  /* Increased max-width */
   background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -226,16 +218,13 @@ button.btn-primary:hover {
   }
 }
 
-/* NEW EQUAL WIDTH GRID SYSTEM - Replaces the fixed column widths */
-/* Make all fields in a row take equal width */
 .d-flex.flex-wrap > * {
   flex: 1 1 0;
-  min-width: 200px; /* Minimum width before wrapping */
+  min-width: 200px; 
   padding: 0 0.5rem;
   box-sizing: border-box;
 }
 
-/* Override the col-md-4 class to use the flexible system */
 .col-md-4 {
   flex: 1 1 0 !important;
   max-width: none !important;
@@ -243,13 +232,11 @@ button.btn-primary:hover {
   box-sizing: border-box;
 }
 
-/* Special case for single items - they should take full width */
 .d-flex.flex-wrap > :only-child {
   flex: 0 0 100%;
   max-width: 100%;
 }
 
-/* Responsive behavior for mobile */
 @media (max-width: 768px) {
   .d-flex.flex-wrap > *,
   .col-md-4 {
@@ -258,7 +245,6 @@ button.btn-primary:hover {
   }
 }
 
-/* Keep the original classes for reference but override their behavior */
 .row.g-4 {
   gap: 0.5rem;
 }
@@ -281,7 +267,6 @@ select.form-control {
   width: 100%;
 }
 
-/* Make the whole form responsive */
 @media (max-width: 576px) {
   .form-preview {
       width: 95%;

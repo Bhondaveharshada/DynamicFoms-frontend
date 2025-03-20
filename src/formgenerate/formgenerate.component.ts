@@ -37,7 +37,7 @@ export class FormgenerateComponent {
   previewForm: FormGroup | null = null;
 
   userFormData: any;
-  formData: any = null; // Static title and question
+  formData: any = null; 
   fields: Field[] = [];
   formfieldId: any;
   isPreviewMode = false;
@@ -68,15 +68,12 @@ export class FormgenerateComponent {
 
     this.fetchPatientData();
 
-
-  // Add this block to listen for form value changes and re-evaluate visibility conditions
   if (this.previewForm) {
     this.previewForm.valueChanges.subscribe(() => {
       this.evaluateVisibilityConditions();
     });
   }
 
-    // Listen for changes in additionalFields to apply validators
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
       fields.forEach((field, index) => {
         const fieldControl = (this.previewForm?.get('additionalFields') as FormArray).at(index) as FormGroup;
@@ -111,8 +108,8 @@ export class FormgenerateComponent {
 
                   if (field.inputType === 'number' && field.validateNumber && field.softValidation) {
                     const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-                    const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
-                    const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
+                    const beforeDecimal = beforeDecimalPart.length;
+                    const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; 
 
                     const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
 
@@ -143,7 +140,7 @@ export class FormgenerateComponent {
                     validationWarning: [null],
                     hasVisibilityCondition: [field.hasVisibilityCondition || false],
                     visibilityCondition: [field.visibilityCondition || null],
-                    isVisible: [true], // Default visibility to true
+                    isVisible: [true], 
                     dateValidation: [field.dateValidation || false],
                     dateFieldType: [field.dateFieldType || null]
                   });
@@ -152,17 +149,17 @@ export class FormgenerateComponent {
                 })
               );
 
-              this.assignDateFieldTypes(fieldsArray); // Assign Start/End validation
+              this.assignDateFieldTypes(fieldsArray); 
 
               return this.fb.group({ fields: fieldsArray });
             })
           ),
         });
 
-        // Evaluate visibility conditions after form initialization
+      
         this.evaluateVisibilityConditions();
 
-        // Listen for changes in additionalFields to apply validators and re-evaluate visibility
+    
         this.previewForm?.get('additionalFields')?.valueChanges.subscribe(() => {
           this.evaluateVisibilityConditions();
         });
@@ -179,7 +176,7 @@ export class FormgenerateComponent {
 
 isRowVisible(rowIndex: number): boolean {
   const row = this.getFields(rowIndex).controls;
-  return row.some(field => field.value.isVisible);  // At least one field is visible
+  return row.some(field => field.value.isVisible);  
 }
 
 
@@ -191,7 +188,6 @@ isRowVisible(rowIndex: number): boolean {
       dateFields[0].get('dateFieldType')?.setValue('start');
       dateFields[1].get('dateFieldType')?.setValue('end');
 
-      // Apply validation
       this.applyDateValidation(dateFields[0], dateFields[1]);
     }
   }
@@ -204,7 +200,7 @@ isRowVisible(rowIndex: number): boolean {
       if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
         startField.get('value')?.setErrors({ invalidStartDate: '⚠ Start date is greater than end date' });
       } else {
-        startField.get('value')?.setErrors(null); // Clear the error
+        startField.get('value')?.setErrors(null); 
       }
     });
 
@@ -214,7 +210,7 @@ isRowVisible(rowIndex: number): boolean {
       if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
         endField.get('value')?.setErrors({ invalidEndDate: '⚠ End date less than start date' });
       } else {
-        endField.get('value')?.setErrors(null); // Clear the error
+        endField.get('value')?.setErrors(null); 
       }
     });
   }
@@ -235,7 +231,7 @@ isRowVisible(rowIndex: number): boolean {
 
         if (visibilityCondition) {
           const isVisible = this.evaluateVisibilityCondition(fieldGroup, formValues);
-          console.log(`Field ${fieldGroup.get('label')?.value} visibility: ${isVisible}`); // Debugging
+          console.log(`Field ${fieldGroup.get('label')?.value} visibility: ${isVisible}`); 
           fieldGroup.get('isVisible')?.setValue(isVisible, { emitEvent: false });
         } else {
           fieldGroup.get('isVisible')?.setValue(true, { emitEvent: false });
@@ -249,7 +245,7 @@ isRowVisible(rowIndex: number): boolean {
 
     if (!visibilityCondition) {
       console.log(`No visibility condition for field: ${field.get('label')?.value}`);
-      return true; // No condition means the field is always visible
+      return true;
     }
 
     console.log(`Evaluating visibility condition for field: ${field.get('label')?.value}`);
@@ -257,23 +253,18 @@ isRowVisible(rowIndex: number): boolean {
 
     try {
       const context: { [key: string]: any } = {};
-
-      // Extract all field references (text within single quotes)
       const fieldReferences: string[] = visibilityCondition.match(/'([^']+)'/g) || [];
-      const uniqueFieldReferences = [...new Set(fieldReferences)]; // Avoid duplicates
+      const uniqueFieldReferences = [...new Set(fieldReferences)]; 
 
       console.log(`Field references: ${uniqueFieldReferences}`);
-
-      // For each referenced field, set up the corresponding value in the context
       for (const ref of uniqueFieldReferences) {
         const fieldName = ref.replace(/'/g, '');
 
         if (!this.checkIfFieldExists(fieldName)) {
           console.log(`Field "${fieldName}" does not exist, treated as literal.`);
-          continue; // Skip replacement for literals
+          continue; 
         }
 
-        // Find the field value
         let fieldValue = null;
         this.additionalFields.controls.forEach((row, rowIndex) => {
           const fields = row.get('fields') as FormArray;
@@ -282,9 +273,7 @@ isRowVisible(rowIndex: number): boolean {
             if (fieldGroup.get('label')?.value === fieldName) {
               fieldValue = fieldGroup.get('value')?.value;
 
-              // Handle array values for checkboxes or multi-select fields
               if (Array.isArray(fieldValue)) {
-                // Keep the value as an array for evaluation
                 context[fieldName] = fieldValue;
               } else {
                 context[fieldName] = fieldValue;
@@ -298,37 +287,29 @@ isRowVisible(rowIndex: number): boolean {
 
       console.log(`Context for evaluation:`, context);
 
-      // Replace field references in the condition with their values
       let parsedCondition = visibilityCondition;
       for (const ref of uniqueFieldReferences) {
         const fieldName = ref.replace(/'/g, '');
         if (this.checkIfFieldExists(fieldName)) {
           const fieldValue = context[fieldName];
-
-          // Handle array values
           if (Array.isArray(fieldValue)) {
-            // Replace == conditions
             parsedCondition = parsedCondition.replace(
               new RegExp(`'${fieldName}' == '([^']+)'`, 'g'),
               (match:any, value:any) => `context['${fieldName}'].includes('${value}')`
             );
-            // Replace != conditions
             parsedCondition = parsedCondition.replace(
               new RegExp(`'${fieldName}' != '([^']+)'`, 'g'),
               (match:any, value:any) => `!context['${fieldName}'].includes('${value}')`
             );
           } else {
-            // Replace with the field value (non-array)
             const replacement = fieldValue !== null && fieldValue !== undefined ? `'${fieldValue}'` : 'null';
             parsedCondition = parsedCondition.replace(new RegExp(`'${fieldName}'`, 'g'), replacement);
           }
         }
-        // Else, leave the ref as-is (literal)
       }
 
       console.log(`Parsed condition: ${parsedCondition}`);
 
-      // Evaluate the parsed condition
       const result = this.evaluateCondition(parsedCondition, context);
       console.log(`Evaluation result for field "${field.get('label')?.value}":`, result);
 
@@ -339,7 +320,6 @@ isRowVisible(rowIndex: number): boolean {
     }
   }
 
-  // Helper method to check if a field exists
   checkIfFieldExists(fieldName: string): boolean {
     let exists = false;
     this.additionalFields.controls.forEach(row => {
@@ -354,10 +334,8 @@ isRowVisible(rowIndex: number): boolean {
     return exists;
   }
 
-  // Helper method to safely evaluate the condition
   evaluateCondition(condition: string, context: { [key: string]: any }): boolean {
     try {
-      // Use a safe evaluation method
       return new Function('context', `return ${condition}`)(context);
     } catch (error) {
       console.error('Error evaluating condition:', error);
@@ -370,7 +348,6 @@ isRowVisible(rowIndex: number): boolean {
     field.patchValue({ isOpen: false });
   }
 
-  // Helper method to generate a unique ID if one doesn't exist
   generateUniqueId(): string {
     return 'field_' + new Date().getTime() + '_' + Math.random().toString(36).substr(2, 9);
   }
@@ -390,11 +367,9 @@ isRowVisible(rowIndex: number): boolean {
     const field = this.getFields(rowIndex).at(fieldIndex) as FormGroup;
 
     if (field.value.allowMultipleSelection === true) {
-      // Handle multiple selection
       const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
       field.get('value')?.setValue(selectedOptions);
     } else {
-      // Handle single selection
       const selectedValue = selectElement.value;
       field.get('value')?.setValue(selectedValue);
     }
@@ -409,13 +384,13 @@ isRowVisible(rowIndex: number): boolean {
       case 'text':
         return [Validators.required, Validators.minLength(3)];
       case 'checkbox':
-        return [Validators.requiredTrue]; // Ensures checkbox is checked
+        return [Validators.requiredTrue]; 
       case 'radio':
         return [Validators.required];
       case 'dropdown':
-        return [Validators.required]; // Dropdown requires a value
+        return [Validators.required]; 
       default:
-        return [Validators.required]; // Default validator
+        return [Validators.required]; 
     }
   }
 
@@ -432,16 +407,13 @@ isRowVisible(rowIndex: number): boolean {
 
     if (field.inputType === 'number' && field.validateNumber && field.numberValidation) {
         const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-        const beforeDecimal = beforeDecimalPart.length; // Max allowed digits before decimal
-        const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; // Exact required decimal places
-
-        // Updated regex to enforce decimal places strictly
+        const beforeDecimal = beforeDecimalPart.length; 
+        const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; 
         const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
 
         console.log("Applying pattern validator:", regexPattern);
 
         if (!field.softValidation) {
-            // Hard validation: Enforce the pattern
             validators.push(Validators.pattern(regexPattern));
         }
     }
@@ -453,8 +425,6 @@ isRowVisible(rowIndex: number): boolean {
   validateNumberInput(event: KeyboardEvent) {
     const allowedChars = /[0-9.]/
     const inputChar = String.fromCharCode(event.keyCode);
-
-    // Prevent multiple dots
     if (inputChar === '.' && (event.target as HTMLInputElement).value.includes('.')) {
       event.preventDefault();
     }
@@ -483,23 +453,16 @@ isRowVisible(rowIndex: number): boolean {
         timepointId: this.timepointId,
         formId: this.route.snapshot.queryParams['formId']
       };
-
-      // Ensure proper handling of allowMultipleSelection flag and validate IDs
       formData.additionalFields.forEach((rowGroup: any) => {
         rowGroup.fields.forEach((field: any) => {
-          // Make sure each field has an ID
           if (!field.id) {
             field.id = this.generateUniqueId();
           }
-
-          // Only include allowMultipleSelection for dropdown fields
           if (field.inputType === 'dropdown') {
             field.allowMultipleSelection = field.allowMultipleSelection === true;
           } else {
             delete field.allowMultipleSelection;
           }
-
-          // Remove the isOpen property as it's UI-only
           delete field.isOpen;
         });
       });
@@ -635,36 +598,27 @@ isRowVisible(rowIndex: number): boolean {
         existingFieldObject.fields.forEach((existingField: any) => {
           const matchingField = fieldsFormArray.controls.find((control) => {
             const controlValue = control.value;
-            // Match by id if available, otherwise fall back to matching by label and type
             return (existingField.id && controlValue.id === existingField.id) ||
                    (controlValue.inputType === existingField.inputType && controlValue.label === existingField.label);
           });
 
           if (matchingField) {
             const fieldFormGroup = matchingField as FormGroup;
-            // Ensure the ID is set correctly
             fieldFormGroup.get('id')?.setValue(existingField.id || this.generateUniqueId());
-
-            // IMPORTANT FIX: Preserve the allowMultipleSelection property correctly
             if (existingField.inputType === 'dropdown') {
-              // Use the original field's setting if it exists, otherwise keep the current setting
               const useMultipleSelection = existingField.hasOwnProperty('allowMultipleSelection')
                 ? existingField.allowMultipleSelection === true
                 : fieldFormGroup.get('allowMultipleSelection')?.value === true;
 
               fieldFormGroup.get('allowMultipleSelection')?.setValue(useMultipleSelection);
             }
-
-            // Handle value setting based on field type and allowMultipleSelection
             if (existingField.inputType === 'checkbox' ||
                 (existingField.inputType === 'dropdown' &&
                  (existingField.allowMultipleSelection === true || fieldFormGroup.get('allowMultipleSelection')?.value === true))) {
-              // Make sure the value is an array
               const valueArray = Array.isArray(existingField.value) ? existingField.value :
                                 (existingField.value ? [existingField.value] : []);
               fieldFormGroup.get('value')?.setValue(valueArray);
             } else {
-              // For radio buttons and single selection dropdowns, set the selected value
               fieldFormGroup.get('value')?.setValue(existingField.value || '');
             }
           }
@@ -713,15 +667,11 @@ isRowVisible(rowIndex: number): boolean {
         formId: this.route.snapshot.queryParams['formId']
       };
 
-      // Validate IDs and remove UI-only properties
       formData.additionalFields.forEach((rowGroup: any) => {
         rowGroup.fields.forEach((field: any) => {
-          // Make sure each field has an ID
           if (!field.id) {
             field.id = this.generateUniqueId();
           }
-
-          // Remove UI-only properties
           delete field.isOpen;
         });
       });
@@ -781,23 +731,15 @@ isRowVisible(rowIndex: number): boolean {
       console.error('Form preview container not found.');
       return;
     }
-
-    // Clone the form content to modify it without affecting the original
     const clonedContent = printContent.cloneNode(true) as HTMLElement;
-
-    // Remove unwanted buttons (update, edit, print, etc.)
     const buttons = clonedContent.querySelectorAll('button');
     buttons.forEach((button) => button.remove());
-
-    // Temporarily remove placeholders from inputs and textareas
     const inputs = clonedContent.querySelectorAll('input, textarea');
     const placeholders: string[] = [];
     inputs.forEach((input, index) => {
-      placeholders[index] = input.getAttribute('placeholder') || ''; // Save current placeholder
-      input.removeAttribute('placeholder'); // Remove placeholder
+      placeholders[index] = input.getAttribute('placeholder') || ''; 
+      input.removeAttribute('placeholder');
     });
-
-    // Append the cloned content to the body temporarily (hidden)
     const container = document.createElement('div');
     container.style.position = 'absolute';
     container.style.top = '0';
@@ -807,23 +749,19 @@ isRowVisible(rowIndex: number): boolean {
     container.appendChild(clonedContent);
     document.body.appendChild(container);
 
-    // Use html2canvas to capture the modified content
     html2canvas(clonedContent, {
-      scale: 2, // Increase resolution for better clarity
-      useCORS: true, // Handle cross-origin images
-      width: clonedContent.scrollWidth, // Full width of the content
-      height: clonedContent.scrollHeight, // Full height of the content
+      scale: 2,
+      useCORS: true, 
+      width: clonedContent.scrollWidth, 
+      height: clonedContent.scrollHeight, 
     })
       .then((canvas) => {
-        // Convert the canvas to an image
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4'); // Create PDF in portrait mode
+        const pdf = new jsPDF('p', 'mm', 'a4'); 
 
-        // Calculate dimensions to fit the content on an A4 page
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        // Add the image to the PDF
         let yOffset = 0;
         while (yOffset < pdfHeight) {
           pdf.addImage(
@@ -838,7 +776,6 @@ isRowVisible(rowIndex: number): boolean {
           if (yOffset < pdfHeight) pdf.addPage();
         }
 
-        // Save the PDF
         if (this.patientData) {
           pdf.save(this.patientData.id + "_" + this.patientData.name + "_" + this.formData.title + '.pdf');
         } else {
@@ -849,14 +786,12 @@ isRowVisible(rowIndex: number): boolean {
         console.error('Error capturing the form:', error);
       })
       .finally(() => {
-        // Restore placeholders
         inputs.forEach((input, index) => {
           if (placeholders[index]) {
             input.setAttribute('placeholder', placeholders[index]);
           }
         });
 
-        // Remove the temporary container
         document.body.removeChild(container);
       });
   }

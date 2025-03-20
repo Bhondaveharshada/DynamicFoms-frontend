@@ -113,9 +113,7 @@
                   }
                 </div>
               }
-
-
-              <!-- Add this after the number validation section -->
+              <!-- visibility -->
               <div class="form-check mt-2">
                 <input type="checkbox" class="form-check-input" id="visibilityCondition-{{ rowIdx }}-{{ fieldIdx }}"
                   [(ngModel)]="field.hasVisibilityCondition" />
@@ -137,8 +135,7 @@
                 </div>
                 }
               </div>
-
-              <!-- Add this in your field options section for dropdown fields -->
+               <!-- multiple selection -->
               <div *ngIf="field.inputType === 'dropdown'" class="form-check mt-2">
                 <input class="form-check-input" type="checkbox" id="allowMultiple{{rowIdx}}-{{fieldIdx}}"
                   [(ngModel)]="field.allowMultipleSelection">
