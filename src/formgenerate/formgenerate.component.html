@@ -9,14 +9,20 @@
       <form *ngIf="previewForm" [formGroup]="previewForm" class="form row g-3">
         <!-- Iterate over each row -->
         <div formArrayName="additionalFields" class="w-100">
-          <div *ngFor="let row of additionalFields.controls; let rowIndex = index" [formGroupName]="rowIndex"
-            class="mb-4 p-3 border rounded">
+          <ng-container *ngFor="let row of additionalFields.controls; let rowIndex = index" >
+          <div  [formGroupName]="rowIndex"
+            class="mb-4 p-3 border rounded"
+            *ngIf="isRowVisible(rowIndex)"
+            >
             <!-- Iterate over each field in the row -->
             <div formArrayName="fields" class="d-flex flex-wrap"
-              [class.two-item-row]="getFields(rowIndex).controls.length === 2">
-              <div *ngFor="let field of getFields(rowIndex).controls; let fieldIndex = index"
+              [class.two-item-row]="getFields(rowIndex).controls.length === 2"
+
+              >
+              <ng-container  *ngFor="let field of getFields(rowIndex).controls; let fieldIndex = index">
+              <div *ngIf="field.value.isVisible"
                 [formGroupName]="fieldIndex" class="col-md-4 mb-3">
-                <div *ngIf="field.value.isVisible" class="form-field p-3 border rounded">
+                <div  class="form-field p-3 border rounded">
                   <!-- Hidden ID field -->
                   <input type="hidden" formControlName="id">
 
@@ -137,8 +143,10 @@
 
                 </div>
               </div>
+            </ng-container>
             </div>
           </div>
+        </ng-container>
         </div>
 
         <!-- Submit Button -->

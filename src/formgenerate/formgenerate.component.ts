@@ -177,6 +177,10 @@ export class FormgenerateComponent {
     });
 }
 
+isRowVisible(rowIndex: number): boolean {
+  const row = this.getFields(rowIndex).controls;
+  return row.some(field => field.value.isVisible);  // At least one field is visible
+}
 
 
   assignDateFieldTypes(fieldsArray: FormArray) {
