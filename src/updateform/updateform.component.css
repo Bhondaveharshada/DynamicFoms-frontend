@@ -1,4 +1,4 @@
-/* General Styles */
+
 body {
   margin: 0;
   font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -20,7 +20,6 @@ body {
   }
 }
 
-/* Sidebar Styles */
 .sidebar {
   width: 100%;
   border: none;
@@ -33,13 +32,12 @@ body {
   margin-bottom: 20px;
 }
 
-/* Hide sidebar on mobile */
 @media (max-width: 767px) {
   .sidebar {
-    display: none; /* This hides the sidebar on mobile */
+    display: none; 
   }
   
-  /* Make form builder take full width on mobile */
+ 
   .form-builder {
     width: 100%;
   }
@@ -48,7 +46,7 @@ body {
 @media (min-width: 768px) {
   .sidebar {
     width: 25%;
-    display: block; /* Ensure it's visible on desktop */
+    display: block; 
   }
 }
 
@@ -100,7 +98,6 @@ body {
   text-align: center;
 }
 
-/* Form Builder Styles */
 .form-builder {
   display: flex;
   flex-direction: column;
@@ -130,7 +127,7 @@ body {
   margin-bottom: 20px;
 }
 
-/* Mobile adjustment for form title */
+
 @media (max-width: 767px) {
   .form-builder h1 {
     margin-left: 0;
@@ -138,7 +135,7 @@ body {
   }
 }
 
-/* Form Row and Field Styles */
+
 .form-row-container {
   margin-bottom: 20px;
   padding: 10px;
@@ -164,36 +161,36 @@ body {
   gap: 16px;
 }
 
-/* Dynamic field width system based on the dragdrop component */
+
 .form-field-wrapper {
   padding: 5px;
   box-sizing: border-box;
   transition: all 0.3s ease;
-  width: 100%; /* Default to full width on mobile */
+  width: 100%;
 }
 
-/* Responsive grid layout */
+
 @media (min-width: 768px) {
-  /* Default: three fields per row */
+ 
   .form-field-wrapper {
     flex: 1 0 calc(33.333% - 11px);
     max-width: calc(33.333% - 11px);
   }
   
-  /* Special handling for two fields (equal width) */
+  
   .fields-row.two-items .form-field-wrapper {
     flex: 1 0 calc(50% - 8px);
     max-width: calc(50% - 8px);
   }
   
-  /* Single field takes full width */
+ 
   .fields-row.single-item .form-field-wrapper {
     flex: 1 0 100%;
     max-width: 100%;
   }
 }
 
-/* Mobile view - stack everything */
+
 @media (max-width: 767px) {
   .form-field-wrapper {
     flex: 0 0 100%;
@@ -231,7 +228,7 @@ body {
   background-color: #f9fafd;
 }
 
-/* Special case for remaining fields when not evenly divisible by 3 */
+
 @media (min-width: 768px) {
   .fields-row .form-field-wrapper:nth-child(3n+4):nth-last-child(2),
   .fields-row .form-field-wrapper:nth-child(3n+5):last-child {
@@ -245,7 +242,7 @@ body {
   }
 }
 
-/* Button Styles */
+
 .button-wrapper {
   text-align: left;
   margin-top: 5px;
@@ -261,7 +258,7 @@ body {
   color: #fff;
 }
 
-/* New Row Drop Area */
+
 .new-row-drop-area {
   min-height: 80px;
   border: 2px dashed #d5dff0;
@@ -277,10 +274,10 @@ body {
   padding: 16px;
 }
 
-/* Mobile adjustment for new row drop area */
+
 @media (max-width: 767px) {
   .new-row-drop-area {
-    display: none; /* Hide on mobile since drag and drop is disabled */
+    display: none; 
   }
 }
 
@@ -295,7 +292,7 @@ body {
   margin-top: 1rem;         
 }
 
-/* Responsive adjustments for action buttons on mobile */
+
 @media (max-width: 767px) {
   .form-actions {
     flex-direction: column;
