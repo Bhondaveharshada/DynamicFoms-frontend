@@ -475,17 +475,8 @@ isRowVisible(rowIndex: number): boolean {
   }
 
   onSubmit() {
+
     if (this.previewForm?.valid) {
-      console.log("Form is Valid:", this.previewForm.value);
-      alert("Valid");
-    } else {
-      // 🔥 Mark all fields as touched to trigger error messages
-      this.previewForm?.markAllAsTouched();
-      console.log("Form is Valid:", this.previewForm?.value);
-      console.log("Form Errors:", this.previewForm?.errors);
-      alert("Invalid");
-    }
-    /* if (this.previewForm?.valid) {
       const formData = {
         ...this.previewForm.value,
         patientId: this.patientId,
@@ -580,14 +571,15 @@ isRowVisible(rowIndex: number): boolean {
 
       });
     } else {
+     this.previewForm?.markAllAsTouched();
+     console.log("Form Errors:", this.previewForm?.errors);
       Swal.fire({
         title: 'Error!',
-        text: 'Fill Required Fields correctly!',
         icon: 'error',
         confirmButtonText: 'OK'
       });
       console.log("Form is invalid");
-    } */
+    }
   }
 
   onBack() {
