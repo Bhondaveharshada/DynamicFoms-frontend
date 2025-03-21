@@ -52,12 +52,11 @@ export class FormService {
     return this.http.get(`${environment.api}/allResponses/${patientId}`)
   }
 
-
-  updateFormFields(id:any,data:any){
-    const {title,addformfields} = data
-    return this.http.patch(`${environment.api}/updateFormFields/${id}`,{data})
-  }
-
+// Fix it to this
+updateFormFields(id: any, data: any) {
+  // Don't destructure - just pass the data as is
+  return this.http.patch(`${environment.api}/updateFormFields/${id}`, {data: data})
+}
   saveFormLink(id:any,formLink:string){
     console.log('Sending data to server:', formLink);
     return this.http.put(`${environment.api}/savelinktoFormFields/${id}`,{formLink})

@@ -92,7 +92,7 @@ export class FormgenerateComponent {
       next: (response: any) => {
         this.formData = response.result;
         console.log("this.formData : ", this.formData);
-
+  
         this.fields = response.result.additionalFields.map((field: any) => field);
         this.previewForm = this.fb.group({
           title: [this.formData.title, Validators.required],
@@ -105,32 +105,13 @@ export class FormgenerateComponent {
                     field.value || '',
                     dynamicValidators.length > 0 ? Validators.compose(dynamicValidators) : null
                   );
-
-                  if (field.inputType === 'number' && field.validateNumber && field.softValidation) {
-                    const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-                    const beforeDecimal = beforeDecimalPart.length;
-                    const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
-
-                    const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
-
-                    control.valueChanges.subscribe(value => {
-                      const fieldGroup = control.parent;
-                      if (fieldGroup) {
-                        if (value && !regexPattern.test(value)) {
-                          fieldGroup.get('validationWarning')?.setValue(`⚠ Value does not match expected format: ${field.numberValidation}`, { emitEvent: false });
-                        } else {
-                          fieldGroup.get('validationWarning')?.setValue(null, { emitEvent: false });
-                        }
-                      }
-                    });
-                  }
-
+  
                   const fieldGroup = this.fb.group({
                     id: [field.id || this.generateUniqueId(), Validators.required],
                     label: [field.label, Validators.required],
                     value: control,
                     inputType: [field.inputType, Validators.required],
-                    isrequired: [field.isrequired],
+                    isrequired: [field.isrequired !== undefined ? field.isrequired : field.required], // Ensure required is correctly mapped
                     options: [Array.isArray(field.options) ? field.options : []],
                     allowMultipleSelection: [field.allowMultipleSelection === true],
                     isOpen: [false],
@@ -144,41 +125,25 @@ export class FormgenerateComponent {
                     dateValidation: [field.dateValidation || false],
                     dateFieldType: [field.dateFieldType || null]
                   });
-
+  
                   return fieldGroup;
                 })
               );
-
+  
               this.assignDateFieldTypes(fieldsArray);
-
               return this.fb.group({ fields: fieldsArray });
             })
           ),
         });
-
-
+  
         this.evaluateVisibilityConditions();
-
-
-        this.previewForm?.get('additionalFields')?.valueChanges.subscribe(() => {
-          this.evaluateVisibilityConditions();
-        });
-
         this.previewForm.updateValueAndValidity();
-        console.log("Form Errors 0:", this.previewForm.get('additionalFields.0.fields.0.value')?.errors);
-        console.log("preview forms 0 : ", this.previewForm.valid, this.previewForm.value);
-
-        this.checkIfFormFilled().then((isFilled) => {
-          if (isFilled) {
-            console.log('Form is already filled, populating data...');
-          }
-        });
       },
       error: (err: any) => {
         console.error("Error fetching fields", err);
       },
     });
-}
+  }
 
 isRowVisible(rowIndex: number): boolean {
   const row = this.getFields(rowIndex).controls;
@@ -451,105 +416,48 @@ isRowVisible(rowIndex: number): boolean {
   }
 
   onSubmit() {
+  if (this.previewForm?.valid) {
+    const formData = {
+      ...this.previewForm.value,
+      patientId: this.patientId,
+      timepointId: this.timepointId,
+      formId: this.route.snapshot.queryParams['formId']
+    };
 
-    if (this.previewForm?.valid) {
-      const formData = {
-        ...this.previewForm.value,
-        patientId: this.patientId,
-        timepointId: this.timepointId,
-        formId: this.route.snapshot.queryParams['formId']
-      };
-      formData.additionalFields.forEach((rowGroup: any) => {
-        rowGroup.fields.forEach((field: any) => {
-          if (!field.id) {
-            field.id = this.generateUniqueId();
-          }
-          if (field.inputType === 'dropdown') {
-            field.allowMultipleSelection = field.allowMultipleSelection === true;
-          } else {
-            delete field.allowMultipleSelection;
-          }
-          delete field.isOpen;
-        });
-      });
-
-      this.formService.addform(formData, this.formfieldId).subscribe({
-        next: (res: any) => {
-
-          localStorage.setItem('needsDataRefresh', 'true');
-          const fields = this.fields;
-          const userform = res.result.additionalFields
-          let payload = {
-            id: this.patientId,
-            name: this.patientData.name,
-            formName: this.formData.title,
-            formData: userform
-          }
-          this.emailService.sendEmail(payload).subscribe(
-            {
-              next: (res) => {
-                Swal.fire({
-                  title: 'Success!',
-                  text: 'Email sent successfully!',
-                  icon: 'success',
-                  confirmButtonText: 'OK'
-                });
-
-                const timestamp = new Date().getTime();
-                this.router.navigate(['/patient/datematrix'], {
-                  queryParams: {
-                    id: this.patientId,
-                    t: timestamp
-                  }
-                });
-
-
-              },
-
-              error: (err) => {
-                console.error("Error sending email", err);
-              }
-            });
-          const Toast = Swal.mixin({
-            toast: true,
-            position: "top-end",
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-              toast.onmouseenter = Swal.stopTimer;
-              toast.onmouseleave = Swal.resumeTimer;
-            }
-          });
-          Toast.fire({
-            icon: "success",
-            title: "Form Submitted successfully"
-          }).then(() => {
-
-            if (this.previewForm) {
-              this.previewForm.disable();
-              this.prePopulatedFlag = true;
-            }
-          })
-          const id = res.result._id
-          this.userFormData = this.processSubmittedData(fields, userform);
-
-        }, error: (err: any) => {
-          console.log("errrorrr");
+    formData.additionalFields.forEach((rowGroup: any) => {
+      rowGroup.fields.forEach((field: any) => {
+        if (!field.id) {
+          field.id = this.generateUniqueId();
         }
+        if (field.inputType === 'dropdown') {
+          field.allowMultipleSelection = field.allowMultipleSelection === true;
+        } else {
+          delete field.allowMultipleSelection;
+        }
+        field.isrequired = field.isrequired !== undefined ? field.isrequired : field.required; // Ensure required is included
+        delete field.isOpen;
+      });
+    });
 
-      });
-    } else {
-     this.previewForm?.markAllAsTouched();
-     console.log("Form Errors:", this.previewForm?.errors);
-      Swal.fire({
-        title: 'Error!',
-        icon: 'error',
-        confirmButtonText: 'OK'
-      });
-      console.log("Form is invalid");
-    }
+    this.formService.addform(formData, this.formfieldId).subscribe({
+      next: (res: any) => {
+        // Handle success
+      },
+      error: (err: any) => {
+        console.log("Error submitting form", err);
+      }
+    });
+  } else {
+    this.previewForm?.markAllAsTouched();
+    console.log("Form Errors:", this.previewForm?.errors);
+    Swal.fire({
+      title: 'Error!',
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+    console.log("Form is invalid");
   }
+}
 
   onBack() {
     this.route.queryParams.subscribe((params) => {
@@ -678,9 +586,11 @@ isRowVisible(rowIndex: number): boolean {
           if (!field.id) {
             field.id = this.generateUniqueId();
           }
+          field.isrequired = field.isrequired || field.required; // Ensure required is included
           delete field.isOpen;
         });
       });
+  
 
       console.log("Payload : ", formData);
       this.formService.updateSubmittedResponse(formData).subscribe({

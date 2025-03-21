@@ -415,7 +415,7 @@ export class UpdateformComponent implements OnInit {
             id: field.id || this.generateFieldId(),
             inputType: field.inputType,
             label: field.label,
-            required: field.isrequired,
+            required: field.required !== undefined ? field.required : field.isrequired, // Ensure required is correctly mapped
             validateNumber: field.validateNumber,
             softValidation: field.softValidation,
             numberValidation: field.numberValidation,
@@ -434,10 +434,10 @@ export class UpdateformComponent implements OnInit {
       }
     });
   }
-
+  
   onUpdate(event: Event): void {
     event.preventDefault();
-
+  
     const updatedForm = {
       title: this.title,
       additionalFields: this.additionalFields.map(row => ({
@@ -446,6 +446,7 @@ export class UpdateformComponent implements OnInit {
           label: field.label,
           inputType: field.inputType,
           required: field.required,
+          isrequired: field.required, // Add this line to ensure isrequired is set properly
           validateNumber: field.validateNumber,
           softValidation: field.softValidation,
           numberValidation: field.numberValidation,
@@ -458,7 +459,7 @@ export class UpdateformComponent implements OnInit {
         }))
       }))
     };
-
+  
     this.formService.updateFormFields(this.form_id, updatedForm).subscribe({
       next: (response: any) => {
         console.log('Form updated successfully', response);
