@@ -37,7 +37,7 @@ export class FormgenerateComponent {
   previewForm: FormGroup | null = null;
 
   userFormData: any;
-  formData: any = null; 
+  formData: any = null;
   fields: Field[] = [];
   formfieldId: any;
   isPreviewMode = false;
@@ -109,7 +109,7 @@ export class FormgenerateComponent {
                   if (field.inputType === 'number' && field.validateNumber && field.softValidation) {
                     const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
                     const beforeDecimal = beforeDecimalPart.length;
-                    const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; 
+                    const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
 
                     const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
 
@@ -140,7 +140,7 @@ export class FormgenerateComponent {
                     validationWarning: [null],
                     hasVisibilityCondition: [field.hasVisibilityCondition || false],
                     visibilityCondition: [field.visibilityCondition || null],
-                    isVisible: [true], 
+                    isVisible: [true],
                     dateValidation: [field.dateValidation || false],
                     dateFieldType: [field.dateFieldType || null]
                   });
@@ -149,17 +149,17 @@ export class FormgenerateComponent {
                 })
               );
 
-              this.assignDateFieldTypes(fieldsArray); 
+              this.assignDateFieldTypes(fieldsArray);
 
               return this.fb.group({ fields: fieldsArray });
             })
           ),
         });
 
-      
+
         this.evaluateVisibilityConditions();
 
-    
+
         this.previewForm?.get('additionalFields')?.valueChanges.subscribe(() => {
           this.evaluateVisibilityConditions();
         });
@@ -167,6 +167,12 @@ export class FormgenerateComponent {
         this.previewForm.updateValueAndValidity();
         console.log("Form Errors 0:", this.previewForm.get('additionalFields.0.fields.0.value')?.errors);
         console.log("preview forms 0 : ", this.previewForm.valid, this.previewForm.value);
+
+        this.checkIfFormFilled().then((isFilled) => {
+          if (isFilled) {
+            console.log('Form is already filled, populating data...');
+          }
+        });
       },
       error: (err: any) => {
         console.error("Error fetching fields", err);
@@ -176,7 +182,7 @@ export class FormgenerateComponent {
 
 isRowVisible(rowIndex: number): boolean {
   const row = this.getFields(rowIndex).controls;
-  return row.some(field => field.value.isVisible);  
+  return row.some(field => field.value.isVisible);
 }
 
 
@@ -200,7 +206,7 @@ isRowVisible(rowIndex: number): boolean {
       if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
         startField.get('value')?.setErrors({ invalidStartDate: '⚠ Start date is greater than end date' });
       } else {
-        startField.get('value')?.setErrors(null); 
+        startField.get('value')?.setErrors(null);
       }
     });
 
@@ -210,7 +216,7 @@ isRowVisible(rowIndex: number): boolean {
       if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
         endField.get('value')?.setErrors({ invalidEndDate: '⚠ End date less than start date' });
       } else {
-        endField.get('value')?.setErrors(null); 
+        endField.get('value')?.setErrors(null);
       }
     });
   }
@@ -231,7 +237,7 @@ isRowVisible(rowIndex: number): boolean {
 
         if (visibilityCondition) {
           const isVisible = this.evaluateVisibilityCondition(fieldGroup, formValues);
-          console.log(`Field ${fieldGroup.get('label')?.value} visibility: ${isVisible}`); 
+          console.log(`Field ${fieldGroup.get('label')?.value} visibility: ${isVisible}`);
           fieldGroup.get('isVisible')?.setValue(isVisible, { emitEvent: false });
         } else {
           fieldGroup.get('isVisible')?.setValue(true, { emitEvent: false });
@@ -254,7 +260,7 @@ isRowVisible(rowIndex: number): boolean {
     try {
       const context: { [key: string]: any } = {};
       const fieldReferences: string[] = visibilityCondition.match(/'([^']+)'/g) || [];
-      const uniqueFieldReferences = [...new Set(fieldReferences)]; 
+      const uniqueFieldReferences = [...new Set(fieldReferences)];
 
       console.log(`Field references: ${uniqueFieldReferences}`);
       for (const ref of uniqueFieldReferences) {
@@ -262,7 +268,7 @@ isRowVisible(rowIndex: number): boolean {
 
         if (!this.checkIfFieldExists(fieldName)) {
           console.log(`Field "${fieldName}" does not exist, treated as literal.`);
-          continue; 
+          continue;
         }
 
         let fieldValue = null;
@@ -384,13 +390,13 @@ isRowVisible(rowIndex: number): boolean {
       case 'text':
         return [Validators.required, Validators.minLength(3)];
       case 'checkbox':
-        return [Validators.requiredTrue]; 
+        return [Validators.requiredTrue];
       case 'radio':
         return [Validators.required];
       case 'dropdown':
-        return [Validators.required]; 
+        return [Validators.required];
       default:
-        return [Validators.required]; 
+        return [Validators.required];
     }
   }
 
@@ -407,8 +413,8 @@ isRowVisible(rowIndex: number): boolean {
 
     if (field.inputType === 'number' && field.validateNumber && field.numberValidation) {
         const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-        const beforeDecimal = beforeDecimalPart.length; 
-        const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0; 
+        const beforeDecimal = beforeDecimalPart.length;
+        const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
         const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
 
         console.log("Applying pattern validator:", regexPattern);
@@ -737,7 +743,7 @@ isRowVisible(rowIndex: number): boolean {
     const inputs = clonedContent.querySelectorAll('input, textarea');
     const placeholders: string[] = [];
     inputs.forEach((input, index) => {
-      placeholders[index] = input.getAttribute('placeholder') || ''; 
+      placeholders[index] = input.getAttribute('placeholder') || '';
       input.removeAttribute('placeholder');
     });
     const container = document.createElement('div');
@@ -751,13 +757,13 @@ isRowVisible(rowIndex: number): boolean {
 
     html2canvas(clonedContent, {
       scale: 2,
-      useCORS: true, 
-      width: clonedContent.scrollWidth, 
-      height: clonedContent.scrollHeight, 
+      useCORS: true,
+      width: clonedContent.scrollWidth,
+      height: clonedContent.scrollHeight,
     })
       .then((canvas) => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4'); 
+        const pdf = new jsPDF('p', 'mm', 'a4');
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
