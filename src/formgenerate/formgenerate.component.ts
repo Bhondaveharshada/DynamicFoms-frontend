@@ -68,11 +68,11 @@ export class FormgenerateComponent {
 
     this.fetchPatientData();
 
-  if (this.previewForm) {
-    this.previewForm.valueChanges.subscribe(() => {
-      this.evaluateVisibilityConditions();
-    });
-  }
+    if (this.previewForm) {
+      this.previewForm.valueChanges.subscribe(() => {
+        this.evaluateVisibilityConditions();
+      });
+    }
 
     this.previewForm?.get('additionalFields')?.valueChanges.subscribe((fields: any[]) => {
       fields.forEach((field, index) => {
@@ -107,23 +107,37 @@ export class FormgenerateComponent {
                   );
 
                   if (field.inputType === 'number' && field.validateNumber && field.softValidation) {
-                    const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-                    const beforeDecimal = beforeDecimalPart.length;
-                    const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
+                    let beforeDecimal = 0, afterDecimal = 0;
 
-                    const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
+                    if (field.numberValidation.includes('.')) {
+                        const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
+                        beforeDecimal = beforeDecimalPart.length;
+                        afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
+                    } else {
+                        beforeDecimal = field.numberValidation.length;
+                        afterDecimal = 0; // No decimal part
+                    }
+
+                    const regexPattern = afterDecimal > 0
+                        ? new RegExp(`^\\d{1,${beforeDecimal}}(\\.\\d{1,${afterDecimal}})?$`)
+                        : new RegExp(`^\\d{1,${beforeDecimal}}$`); // No decimal allowed
+
+                    console.log("Applying soft validation pattern:", regexPattern);
 
                     control.valueChanges.subscribe(value => {
-                      const fieldGroup = control.parent;
-                      if (fieldGroup) {
-                        if (value && !regexPattern.test(value)) {
-                          fieldGroup.get('validationWarning')?.setValue(`⚠ Value does not match expected format: ${field.numberValidation}`, { emitEvent: false });
-                        } else {
-                          fieldGroup.get('validationWarning')?.setValue(null, { emitEvent: false });
+                        const fieldGroup = control.parent;
+                        if (fieldGroup) {
+                            if (value && !regexPattern.test(value)) {
+                                fieldGroup.get('validationWarning')?.setValue(
+                                    `⚠ Value does not match expected format: ${field.numberValidation}`,
+                                    { emitEvent: false }
+                                );
+                            } else {
+                                fieldGroup.get('validationWarning')?.setValue(null, { emitEvent: false });
+                            }
                         }
-                      }
                     });
-                  }
+                }
 
                   const fieldGroup = this.fb.group({
                     id: [field.id || this.generateUniqueId(), Validators.required],
@@ -178,12 +192,12 @@ export class FormgenerateComponent {
         console.error("Error fetching fields", err);
       },
     });
-}
+  }
 
-isRowVisible(rowIndex: number): boolean {
-  const row = this.getFields(rowIndex).controls;
-  return row.some(field => field.value.isVisible);
-}
+  isRowVisible(rowIndex: number): boolean {
+    const row = this.getFields(rowIndex).controls;
+    return row.some(field => field.value.isVisible);
+  }
 
 
   assignDateFieldTypes(fieldsArray: FormArray) {
@@ -246,6 +260,10 @@ isRowVisible(rowIndex: number): boolean {
     });
   }
 
+  escapeRegExp(string: string): string {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+  }
+
   evaluateVisibilityCondition(field: FormGroup, formValues: any): boolean {
     const visibilityCondition = field.get('visibilityCondition')?.value;
 
@@ -296,20 +314,21 @@ isRowVisible(rowIndex: number): boolean {
       let parsedCondition = visibilityCondition;
       for (const ref of uniqueFieldReferences) {
         const fieldName = ref.replace(/'/g, '');
+        const escapedFieldName = this.escapeRegExp(fieldName); // Escape special characters
         if (this.checkIfFieldExists(fieldName)) {
           const fieldValue = context[fieldName];
           if (Array.isArray(fieldValue)) {
             parsedCondition = parsedCondition.replace(
-              new RegExp(`'${fieldName}' == '([^']+)'`, 'g'),
-              (match:any, value:any) => `context['${fieldName}'].includes('${value}')`
+              new RegExp(`'${escapedFieldName}' == '([^']+)'`, 'g'),
+              (match: any, value: any) => `context['${fieldName}'].includes('${value}')`
             );
             parsedCondition = parsedCondition.replace(
-              new RegExp(`'${fieldName}' != '([^']+)'`, 'g'),
-              (match:any, value:any) => `!context['${fieldName}'].includes('${value}')`
+              new RegExp(`'${escapedFieldName}' != '([^']+)'`, 'g'),
+              (match: any, value: any) => `!context['${fieldName}'].includes('${value}')`
             );
           } else {
             const replacement = fieldValue !== null && fieldValue !== undefined ? `'${fieldValue}'` : 'null';
-            parsedCondition = parsedCondition.replace(new RegExp(`'${fieldName}'`, 'g'), replacement);
+            parsedCondition = parsedCondition.replace(new RegExp(`'${escapedFieldName}'`, 'g'), replacement);
           }
         }
       }
@@ -404,28 +423,39 @@ isRowVisible(rowIndex: number): boolean {
     const validators = [];
 
     if (field.isrequired) {
-        validators.push(Validators.required);
+      validators.push(Validators.required);
     }
 
     if (field.inputType === 'email') {
-        validators.push(Validators.email);
+      validators.push(Validators.email);
     }
 
     if (field.inputType === 'number' && field.validateNumber && field.numberValidation) {
+      let beforeDecimal = 0, afterDecimal = 0;
+
+      if (field.numberValidation.includes('.')) {
         const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-        const beforeDecimal = beforeDecimalPart.length;
-        const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
-        const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
+        beforeDecimal = beforeDecimalPart.length;
+        afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
+      } else {
+        beforeDecimal = field.numberValidation.length;
+        afterDecimal = 0; // No decimal part
+      }
 
-        console.log("Applying pattern validator:", regexPattern);
+      const regexPattern = afterDecimal > 0
+        ? new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`)
+        : new RegExp(`^\\d{1,${beforeDecimal}}$`); // No decimal allowed
 
-        if (!field.softValidation) {
-            validators.push(Validators.pattern(regexPattern));
-        }
+      console.log("Applying pattern validator:", regexPattern);
+
+      if (!field.softValidation) {
+        validators.push(Validators.pattern(regexPattern));
+      }
     }
 
+
     return validators;
-}
+  }
 
 
   validateNumberInput(event: KeyboardEvent) {
@@ -726,7 +756,7 @@ isRowVisible(rowIndex: number): boolean {
           const matchingField = fieldsFormArray.controls.find((control) => {
             const controlValue = control.value;
             return (existingField.id && controlValue.id === existingField.id) ||
-                   (controlValue.inputType === existingField.inputType && controlValue.label === existingField.label);
+              (controlValue.inputType === existingField.inputType && controlValue.label === existingField.label);
           });
 
           if (matchingField) {
@@ -740,10 +770,10 @@ isRowVisible(rowIndex: number): boolean {
               fieldFormGroup.get('allowMultipleSelection')?.setValue(useMultipleSelection);
             }
             if (existingField.inputType === 'checkbox' ||
-                (existingField.inputType === 'dropdown' &&
-                 (existingField.allowMultipleSelection === true || fieldFormGroup.get('allowMultipleSelection')?.value === true))) {
+              (existingField.inputType === 'dropdown' &&
+                (existingField.allowMultipleSelection === true || fieldFormGroup.get('allowMultipleSelection')?.value === true))) {
               const valueArray = Array.isArray(existingField.value) ? existingField.value :
-                                (existingField.value ? [existingField.value] : []);
+                (existingField.value ? [existingField.value] : []);
               fieldFormGroup.get('value')?.setValue(valueArray);
             } else {
               fieldFormGroup.get('value')?.setValue(existingField.value || '');
@@ -935,113 +965,113 @@ isRowVisible(rowIndex: number): boolean {
   }
 
 
-toggleDropdown(rowIndex: number, fieldIndex: number): void {
-  if (!this.previewForm || this.previewForm.disabled) return;
+  toggleDropdown(rowIndex: number, fieldIndex: number): void {
+    if (!this.previewForm || this.previewForm.disabled) return;
 
-  const field = this.getFields(rowIndex).at(fieldIndex);
-  field.patchValue({ isOpen: !field.value.isOpen });
+    const field = this.getFields(rowIndex).at(fieldIndex);
+    field.patchValue({ isOpen: !field.value.isOpen });
 
-  this.additionalFields.controls.forEach((row, rIndex) => {
-    const fields = row.get('fields') as FormArray;
-    fields.controls.forEach((f, fIndex) => {
-      if (rIndex !== rowIndex || fIndex !== fieldIndex) {
-        if (f.value.isOpen) {
-          f.patchValue({ isOpen: false });
-        }
-      }
-    });
-  });
-}
-
-isOptionSelected(selectedValues: any[], option: string): boolean {
-  if (Array.isArray(selectedValues)) {
-    return selectedValues.includes(option);
-  } else {
-    return selectedValues === option;
-  }
-}
-
-
-isAllSelected(selectedValues: any[], options: string[]): boolean {
-  return Array.isArray(selectedValues) &&
-         options.length > 0 &&
-         options.every(opt => selectedValues.includes(opt));
-}
-
-
-toggleSelectAll(event: Event, rowIndex: number, fieldIndex: number): void {
-  const isChecked = (event.target as HTMLInputElement).checked;
-  const field = this.getFields(rowIndex).at(fieldIndex);
-  const options = field.value.options;
-
-  if (isChecked) {
-
-
-    field.get('value')?.setValue([...options]);
-  } else {
-
-    field.get('value')?.setValue([]);
-  }
-}
-
-
-toggleOption(event: Event, rowIndex: number, fieldIndex: number, option: string): void {
-  const isChecked = (event.target as HTMLInputElement).checked;
-  const field = this.getFields(rowIndex).at(fieldIndex);
-  const currentValue = field.get('value')?.value || [];
-
-  if (isChecked) {
-
-    if (!currentValue.includes(option)) {
-      field.get('value')?.setValue([...currentValue, option]);
-    }
-  } else {
-
-    field.get('value')?.setValue(currentValue.filter((val: string) => val !== option));
-  }
-}
-
-getSelectedOptionsText(selectedValues: any[], options: string[]): string {
-  if (!selectedValues || selectedValues.length === 0) {
-    return 'Select options';
-  }
-
-  if (Array.isArray(selectedValues)) {
-    if (selectedValues.length === options.length) {
-      return 'All selected';
-    }
-    return selectedValues.join(' ');
-  } else {
-    return selectedValues;
-  }
-}
-
-
-@HostListener('document:click', ['$event'])
-onDocumentClick(event: MouseEvent): void {
-
-  if (this.previewForm) {
-    let clickedInsideDropdown = false;
-
-
-    const dropdowns = document.querySelectorAll('.dropdown-container');
-    dropdowns.forEach(dropdown => {
-      if (dropdown.contains(event.target as Node)) {
-        clickedInsideDropdown = true;
-      }
-    });
-
-    if (!clickedInsideDropdown) {
-      this.additionalFields.controls.forEach(row => {
-        const fields = row.get('fields') as FormArray;
-        fields.controls.forEach(field => {
-          if (field.value.isOpen) {
-            field.patchValue({ isOpen: false });
+    this.additionalFields.controls.forEach((row, rIndex) => {
+      const fields = row.get('fields') as FormArray;
+      fields.controls.forEach((f, fIndex) => {
+        if (rIndex !== rowIndex || fIndex !== fieldIndex) {
+          if (f.value.isOpen) {
+            f.patchValue({ isOpen: false });
           }
-        });
+        }
       });
+    });
+  }
+
+  isOptionSelected(selectedValues: any[], option: string): boolean {
+    if (Array.isArray(selectedValues)) {
+      return selectedValues.includes(option);
+    } else {
+      return selectedValues === option;
     }
   }
 
-}
+
+  isAllSelected(selectedValues: any[], options: string[]): boolean {
+    return Array.isArray(selectedValues) &&
+      options.length > 0 &&
+      options.every(opt => selectedValues.includes(opt));
+  }
+
+
+  toggleSelectAll(event: Event, rowIndex: number, fieldIndex: number): void {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    const field = this.getFields(rowIndex).at(fieldIndex);
+    const options = field.value.options;
+
+    if (isChecked) {
+
+
+      field.get('value')?.setValue([...options]);
+    } else {
+
+      field.get('value')?.setValue([]);
+    }
+  }
+
+
+  toggleOption(event: Event, rowIndex: number, fieldIndex: number, option: string): void {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    const field = this.getFields(rowIndex).at(fieldIndex);
+    const currentValue = field.get('value')?.value || [];
+
+    if (isChecked) {
+
+      if (!currentValue.includes(option)) {
+        field.get('value')?.setValue([...currentValue, option]);
+      }
+    } else {
+
+      field.get('value')?.setValue(currentValue.filter((val: string) => val !== option));
+    }
+  }
+
+  getSelectedOptionsText(selectedValues: any[], options: string[]): string {
+    if (!selectedValues || selectedValues.length === 0) {
+      return 'Select options';
+    }
+
+    if (Array.isArray(selectedValues)) {
+      if (selectedValues.length === options.length) {
+        return 'All selected';
+      }
+      return selectedValues.join(' ');
+    } else {
+      return selectedValues;
+    }
+  }
+
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+
+    if (this.previewForm) {
+      let clickedInsideDropdown = false;
+
+
+      const dropdowns = document.querySelectorAll('.dropdown-container');
+      dropdowns.forEach(dropdown => {
+        if (dropdown.contains(event.target as Node)) {
+          clickedInsideDropdown = true;
+        }
+      });
+
+      if (!clickedInsideDropdown) {
+        this.additionalFields.controls.forEach(row => {
+          const fields = row.get('fields') as FormArray;
+          fields.controls.forEach(field => {
+            if (field.value.isOpen) {
+              field.patchValue({ isOpen: false });
+            }
+          });
+        });
+      }
+    }
+
+  }
 }
