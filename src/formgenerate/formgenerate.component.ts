@@ -107,23 +107,37 @@ export class FormgenerateComponent {
                   );
 
                   if (field.inputType === 'number' && field.validateNumber && field.softValidation) {
-                    const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-                    const beforeDecimal = beforeDecimalPart.length;
-                    const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
+                    let beforeDecimal = 0, afterDecimal = 0;
 
-                    const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
+                    if (field.numberValidation.includes('.')) {
+                        const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
+                        beforeDecimal = beforeDecimalPart.length;
+                        afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
+                    } else {
+                        beforeDecimal = field.numberValidation.length;
+                        afterDecimal = 0; // No decimal part
+                    }
+
+                    const regexPattern = afterDecimal > 0
+                        ? new RegExp(`^\\d{1,${beforeDecimal}}(\\.\\d{1,${afterDecimal}})?$`)
+                        : new RegExp(`^\\d{1,${beforeDecimal}}$`); // No decimal allowed
+
+                    console.log("Applying soft validation pattern:", regexPattern);
 
                     control.valueChanges.subscribe(value => {
-                      const fieldGroup = control.parent;
-                      if (fieldGroup) {
-                        if (value && !regexPattern.test(value)) {
-                          fieldGroup.get('validationWarning')?.setValue(`⚠ Value does not match expected format: ${field.numberValidation}`, { emitEvent: false });
-                        } else {
-                          fieldGroup.get('validationWarning')?.setValue(null, { emitEvent: false });
+                        const fieldGroup = control.parent;
+                        if (fieldGroup) {
+                            if (value && !regexPattern.test(value)) {
+                                fieldGroup.get('validationWarning')?.setValue(
+                                    `⚠ Value does not match expected format: ${field.numberValidation}`,
+                                    { emitEvent: false }
+                                );
+                            } else {
+                                fieldGroup.get('validationWarning')?.setValue(null, { emitEvent: false });
+                            }
                         }
-                      }
                     });
-                  }
+                }
 
                   const fieldGroup = this.fb.group({
                     id: [field.id || this.generateUniqueId(), Validators.required],
@@ -417,10 +431,20 @@ export class FormgenerateComponent {
     }
 
     if (field.inputType === 'number' && field.validateNumber && field.numberValidation) {
-      const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
-      const beforeDecimal = beforeDecimalPart.length;
-      const afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
-      const regexPattern = new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`);
+      let beforeDecimal = 0, afterDecimal = 0;
+
+      if (field.numberValidation.includes('.')) {
+        const [beforeDecimalPart, afterDecimalPart] = field.numberValidation.split('.');
+        beforeDecimal = beforeDecimalPart.length;
+        afterDecimal = afterDecimalPart ? afterDecimalPart.length : 0;
+      } else {
+        beforeDecimal = field.numberValidation.length;
+        afterDecimal = 0; // No decimal part
+      }
+
+      const regexPattern = afterDecimal > 0
+        ? new RegExp(`^\\d{1,${beforeDecimal}}\\.\\d{${afterDecimal}}$`)
+        : new RegExp(`^\\d{1,${beforeDecimal}}$`); // No decimal allowed
 
       console.log("Applying pattern validator:", regexPattern);
 
@@ -428,6 +452,7 @@ export class FormgenerateComponent {
         validators.push(Validators.pattern(regexPattern));
       }
     }
+
 
     return validators;
   }
