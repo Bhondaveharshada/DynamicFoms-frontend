@@ -15,4 +15,6 @@ export class EmailService {
     const url = `${this.baseUrl}/email/formSubmitted`;
     return this.http.post(url, { data });
   }
+
+  
 }
