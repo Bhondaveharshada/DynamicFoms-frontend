@@ -451,7 +451,6 @@ isRowVisible(rowIndex: number): boolean {
   }
 
   onSubmit() {
-
     if (this.previewForm?.valid) {
       const formData = {
         ...this.previewForm.value,
@@ -459,6 +458,7 @@ isRowVisible(rowIndex: number): boolean {
         timepointId: this.timepointId,
         formId: this.route.snapshot.queryParams['formId']
       };
+      
       formData.additionalFields.forEach((rowGroup: any) => {
         rowGroup.fields.forEach((field: any) => {
           if (!field.id) {
@@ -475,13 +475,15 @@ isRowVisible(rowIndex: number): boolean {
 
       this.formService.addform(formData, this.formfieldId).subscribe({
         next: (res: any) => {
-
           localStorage.setItem('needsDataRefresh', 'true');
           const fields = this.fields;
           const userform = res.result.additionalFields
+          
+          // Make sure patientData includes email
           let payload = {
             id: this.patientId,
             name: this.patientData.name,
+            email: this.patientData.email, // Include the patient's email in the payload
             formName: this.formData.title,
             formData: userform
           }
