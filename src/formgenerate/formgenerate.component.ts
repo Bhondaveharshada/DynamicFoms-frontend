@@ -481,14 +481,24 @@ export class FormgenerateComponent {
   }
 
   onSubmit() {
-
     if (this.previewForm?.valid) {
+      // Show loading spinner
+      Swal.fire({
+        title: 'Processing...',
+        text: 'Submitting form and sending email',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+  
       const formData = {
         ...this.previewForm.value,
         patientId: this.patientId,
         timepointId: this.timepointId,
         formId: this.route.snapshot.queryParams['formId']
       };
+      
       formData.additionalFields.forEach((rowGroup: any) => {
         rowGroup.fields.forEach((field: any) => {
           if (!field.id) {
@@ -502,83 +512,194 @@ export class FormgenerateComponent {
           delete field.isOpen;
         });
       });
-
+  
+      // First save the form
       this.formService.addform(formData, this.formfieldId).subscribe({
-        next: (res: any) => {
-
+        next: async (res: any) => {
           localStorage.setItem('needsDataRefresh', 'true');
-          const fields = this.fields;
-          const userform = res.result.additionalFields
-          let payload = {
-            id: this.patientId,
-            name: this.patientData.name,
-            formName: this.formData.title,
-            formData: userform
-          }
-          this.emailService.sendEmail(payload).subscribe(
-            {
+          const userform = res.result.additionalFields;
+          
+          try {
+            // Generate PDF as base64
+            const pdfBase64 = await this.generatePDFBase64();
+            
+            // Create payload for email service with ONLY PDF (no form data)
+            let filename = '';
+            if (this.patientData) {
+              filename = `${this.patientData.id}_${this.patientData.name}_${this.formData.title}.pdf`;
+            } else {
+              filename = `${this.formData.title}.pdf`;
+            }
+            
+            let payload = {
+              id: this.patientId,
+              name: this.patientData.name,
+              formName: this.formData.title,
+              // Remove formData from the payload to only send PDF
+              pdfAttachment: {
+                content: pdfBase64,
+                filename: filename
+              }
+            }
+            
+            // Close loading spinner and navigate immediately
+            Swal.close();
+            const timestamp = new Date().getTime();
+            this.router.navigate(['/patient/datematrix'], {
+              queryParams: {
+                id: this.patientId,
+                t: timestamp
+              }
+            });
+            
+            // Show success notification
+            const Toast = Swal.mixin({
+              toast: true,
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 1500,
+              timerProgressBar: true,
+              didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+              }
+            });
+            
+            Toast.fire({
+              icon: "success",
+              title: "Form Submitted successfully"
+            }).then(() => {
+              if (this.previewForm) {
+                this.previewForm.disable();
+                this.prePopulatedFlag = true;
+              }
+            });
+            
+            // Send email with PDF attachment in background (don't wait for response)
+            this.emailService.sendEmail(payload).subscribe({
               next: (res) => {
-                Swal.fire({
-                  title: 'Success!',
-                  text: 'Email sent successfully!',
-                  icon: 'success',
-                  confirmButtonText: 'OK'
-                });
-
-                const timestamp = new Date().getTime();
-                this.router.navigate(['/patient/datematrix'], {
-                  queryParams: {
-                    id: this.patientId,
-                    t: timestamp
-                  }
-                });
-
-
+                console.log("Email sent successfully");
               },
-
               error: (err) => {
                 console.error("Error sending email", err);
               }
             });
-          const Toast = Swal.mixin({
-            toast: true,
-            position: "top-end",
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-              toast.onmouseenter = Swal.stopTimer;
-              toast.onmouseleave = Swal.resumeTimer;
-            }
+            
+            const id = res.result._id;
+            this.userFormData = this.processSubmittedData(this.fields, userform);
+          } catch (error) {
+            console.error("Error generating PDF:", error);
+            Swal.fire({
+              title: 'Warning',
+              text: 'Form submitted but could not attach PDF to email',
+              icon: 'warning',
+              confirmButtonText: 'OK'
+            });
+          }
+        }, 
+        error: (err: any) => {
+          Swal.close();
+          console.log("errrorrr", err);
+          Swal.fire({
+            title: 'Error!',
+            text: 'Failed to submit form',
+            icon: 'error',
+            confirmButtonText: 'OK'
           });
-          Toast.fire({
-            icon: "success",
-            title: "Form Submitted successfully"
-          }).then(() => {
-
-            if (this.previewForm) {
-              this.previewForm.disable();
-              this.prePopulatedFlag = true;
-            }
-          })
-          const id = res.result._id
-          this.userFormData = this.processSubmittedData(fields, userform);
-
-        }, error: (err: any) => {
-          console.log("errrorrr");
         }
-
       });
     } else {
       this.previewForm?.markAllAsTouched();
       console.log("Form Errors:", this.previewForm?.errors);
       Swal.fire({
         title: 'Error!',
+        text: 'Please fill all required fields',
         icon: 'error',
         confirmButtonText: 'OK'
       });
       console.log("Form is invalid");
     }
+  }
+
+  generatePDFBase64(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const printContent = document.querySelector('.form-preview') as HTMLElement;
+  
+      if (!printContent) {
+        console.error('Form preview container not found.');
+        reject('Form preview container not found');
+        return;
+      }
+  
+      const clonedContent = printContent.cloneNode(true) as HTMLElement;
+      const buttons = clonedContent.querySelectorAll('button');
+      buttons.forEach((button) => button.remove());
+  
+      const inputs = clonedContent.querySelectorAll('input, textarea');
+      const placeholders: string[] = [];
+      inputs.forEach((input, index) => {
+        placeholders[index] = input.getAttribute('placeholder') || '';
+        input.removeAttribute('placeholder');
+      });
+  
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '100%';
+      container.style.zIndex = '-1';
+      container.appendChild(clonedContent);
+      document.body.appendChild(container);
+  
+      html2canvas(clonedContent, {
+        scale: 2,
+        useCORS: true,
+        width: clonedContent.scrollWidth,
+        height: clonedContent.scrollHeight,
+      })
+        .then((canvas) => {
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+  
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  
+          let yOffset = 0;
+          while (yOffset < pdfHeight) {
+            pdf.addImage(
+              imgData,
+              'PNG',
+              0,
+              -yOffset,
+              pdfWidth,
+              Math.min(pdfHeight - yOffset, pdf.internal.pageSize.getHeight())
+            );
+            yOffset += pdf.internal.pageSize.getHeight();
+            if (yOffset < pdfHeight) {
+              pdf.addPage();
+            } else {
+              // If the content fits within the page, break the loop
+              break;
+            }
+          }
+  
+          // Return the PDF as base64 string
+          const pdfBase64 = pdf.output('datauristring');
+          resolve(pdfBase64);
+        })
+        .catch((error) => {
+          console.error('Error capturing the form:', error);
+          reject(error);
+        })
+        .finally(() => {
+          inputs.forEach((input, index) => {
+            if (placeholders[index]) {
+              input.setAttribute('placeholder', placeholders[index]);
+            }
+          });
+          document.body.removeChild(container);
+        });
+    });
   }
 
   onBack() {

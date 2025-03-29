@@ -6,6 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule, moveItemInArray, CdkDragDrop } from '@angular/cdk/drag-drop';
 import Swal from 'sweetalert2';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { Router } from '@angular/router';
+
+
 
 interface Field {
   id: string;
@@ -64,7 +67,8 @@ export class UpdateformComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private formService: FormService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -437,7 +441,7 @@ export class UpdateformComponent implements OnInit {
 
   onUpdate(event: Event): void {
     event.preventDefault();
-
+  
     const updatedForm = {
       title: this.title,
       additionalFields: this.additionalFields.map(row => ({
@@ -458,18 +462,40 @@ export class UpdateformComponent implements OnInit {
         }))
       }))
     };
-
+  
+    // Show loading while updating
+    Swal.fire({
+      title: 'Updating...',
+      text: 'Please wait while the form is being updated.',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+  
     this.formService.updateFormFields(this.form_id, updatedForm).subscribe({
       next: (response: any) => {
-        console.log('Form updated successfully', response);
-        this.formUpdated = true;
-        setTimeout(() => {
-          this.formUpdated = false;
-        }, 3000);
+        Swal.close();
+  
+        // Show success alert after updating
+        Swal.fire({
+          icon: 'success',
+          title: 'Updated!',
+          text: 'Form updated successfully!'
+        }).then(() => {
+          // Redirect to /allForms after update
+          this.router.navigate(['/allForms']);
+        });
       },
       error: (error: any) => {
-        console.error('Error updating form:', error);
+        Swal.close();
+  
+        // Show error alert if update fails
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: `Failed to update form: ${error.error?.message || 'Unknown error occurred'}`
+        });
       }
     });
   }
+  
 }

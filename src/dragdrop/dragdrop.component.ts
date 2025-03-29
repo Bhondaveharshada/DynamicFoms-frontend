@@ -1,6 +1,6 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormService } from '../services/form.service';
@@ -37,7 +37,7 @@ interface FormRow {
   styleUrl: './dragdrop.component.css'
 })
 export class DragdropComponent {
-  constructor(private formService: FormService, private openaiService: OpenaiService, private cdr: ChangeDetectorRef) { }
+  constructor(private formService: FormService, private openaiService: OpenaiService, private cdr: ChangeDetectorRef, private  router: Router) { }
 
   title: string = '';
   formLink: string | null = null;
@@ -434,10 +434,7 @@ export class DragdropComponent {
   onSave(event: Event) {
     event.preventDefault();
     this.formSubmitted = true;
-
-    let isValid = true;
-    const validationMessages: string[] = [];
-
+  
     const formData = {
       title: this.title,
       additionalFields: this.additionalFields.map(row => ({
@@ -458,7 +455,7 @@ export class DragdropComponent {
         }))
       }))
     };
-
+  
     const formId = new Date().getTime();
     Swal.fire({
       title: 'Saving...',
@@ -466,68 +463,48 @@ export class DragdropComponent {
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading()
     });
-
-     this.formService.addFormFields(formData, formId).subscribe({
+  
+    this.formService.addFormFields(formData, formId).subscribe({
       next: (res: any) => {
         Swal.close();
         const id = res.result._id;
         this._id = id;
-        this.formLink = `${window.location.origin}/form/${id}/${formId}`;
-        Swal.fire({ icon: 'success', title: 'Success', text: 'Form saved successfully!' });
-        this.saveLink();
+  
+        // Save form link in /allForms but no display on dragdrop
+        this.saveLink(id, formId);
         this.fetchForms();
+  
+        // Show success alert
+        Swal.fire({ icon: 'success', title: 'Success', text: 'Form saved successfully!' }).then(() => {
+          // Redirect to /allForms after success
+          this.router.navigate(['/allForms']);
+        });
       },
       error: (err: any) => {
         Swal.close();
-        let errorMessage = 'An unknown error occurred';
-        if (err.error && err.error.message) {
-          errorMessage = err.error.message;
-        }
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: `Failed to save form: ${errorMessage}`
+          text: `Failed to save form: ${err.error?.message || 'Unknown error occurred'}`
         });
       },
     });
   }
-
-  saveLink() {
-    if (!this.formLink || !this._id) {
-      return;
-    }
-
-    const savingToast = Swal.mixin({
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false
-    });
-    savingToast.fire({ title: 'Saving link...', icon: 'info' });
-
-    this.formService.saveFormLink(this._id, this.formLink).subscribe({
-      next: (res: any) => {
-        this.isLinkSaved = true;
-        savingToast.close();
-
-        Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000
-        }).fire({ title: 'Link saved successfully!', icon: 'success' });
+  
+  
+  saveLink(id: string, formId: number) {
+    const formLink = `${window.location.origin}/form/${id}/${formId}`;
+  
+    this.formService.saveFormLink(id, formLink).subscribe({
+      next: () => {
+        console.log('Link saved successfully in allForms');
       },
       error: (err: any) => {
-        savingToast.close();
-
-        Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000
-        }).fire({ title: 'Failed to save link', icon: 'error' });
+        console.error('Failed to save link:', err);
       },
     });
   }
+  
 
   findFieldById(fieldId: string): { field: Field, rowIndex: number, fieldIndex: number } | null {
     for (let rowIndex = 0; rowIndex < this.additionalFields.length; rowIndex++) {
