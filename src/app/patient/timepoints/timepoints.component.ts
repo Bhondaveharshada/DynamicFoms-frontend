@@ -1,15 +1,19 @@
-import { response } from 'express';
-import { TimepointService } from './../../timepoint/Service/timepoint.service';
-import { FormService } from './../../../services/form.service';
-import { RelationService } from './../../relation-matrix/service/relation.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormService } from '../../../services/form.service';
+import { RelationService } from '../../relation-matrix/service/relation.service';
+import { TimepointService } from '../../timepoint/Service/timepoint.service';
 import { PatientService } from '../service/patient-service.service';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-timepoints',
-  imports: [CommonModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './timepoints.component.html',
   styleUrls: ['./timepoints.component.css']
 })
@@ -22,18 +26,18 @@ export class TimepointsComponent implements OnInit {
   tableData: any[] = [];
   headers: string[] = ['Form Name'];
   filledResponses: any[] = [];
-
+  
   constructor(
     private route: ActivatedRoute,
     private relationService: RelationService,
     private formService: FormService,
     private timepointService: TimepointService,
     private patientService: PatientService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
-    // Fetch patientId from query params
     this.route.queryParams.subscribe((params) => {
       this.patientId = params['id'];
       this.getSubmittedResponses();
@@ -41,116 +45,113 @@ export class TimepointsComponent implements OnInit {
     });
   }
 
-  getSubmittedResponses(){
+  getSubmittedResponses() {
     this.formService.getAllResponses(this.patientId).subscribe({
-      next :(response : any) => {
-        this.filledResponses = response.data;
-        console.log("Submitted responses : ", response.data);
+      next: (response: any) => {
+        this.filledResponses = response.data || [];
       },
-
+      error: (err) => console.error('Error fetching responses:', err)
     });
   }
 
-  fetchData(): void {
-    // Track the completion of all service calls
-    const relations$ = this.relationService.getAllRelations();
-    const forms$ = this.formService.getAllFormFields();
-    const timepoints$ = this.timepointService.getTimepoints();
-    const patient$ = this.patientService.getPatientById(this.patientId);
+  async fetchData(): Promise<void> {
+    try {
+      const [relationsResponse, formsResponse, timepointsResponse, patientResponse]: any[] = await Promise.all([
+        firstValueFrom(this.relationService.getAllRelations()),
+        firstValueFrom(this.formService.getAllFormFields()),
+        firstValueFrom(this.timepointService.getTimepoints()),
+        firstValueFrom(this.patientService.getPatientById(this.patientId))
+      ]);
 
-    // Wait for all data to be fetched
-    Promise.all([
-      relations$.toPromise(),
-      forms$.toPromise(),
-      timepoints$.toPromise(),
-      patient$.toPromise()
-    ])
-      .then(([relationsResponse, formsResponse, timepointsResponse, patientResponse]: any[]) => {
-        // Set the data from service responses
-        this.relations = relationsResponse.data;
-        this.forms = formsResponse.result;
-        this.timepoints = timepointsResponse;
-        this.onboardDate = new Date(patientResponse.onboardDate);
+      this.relations = relationsResponse?.data || [];
+      this.forms = formsResponse?.result || [];
+      this.timepoints = timepointsResponse || [];
+      this.onboardDate = patientResponse?.onboardDate ? new Date(patientResponse.onboardDate) : null;
 
-        // Generate the table data
-        console.log("data fetched sucessfully");
-
-        this.generateTableData();
-      })
-      .catch((error) => {
-        console.error('Error fetching data:', error);
-      });
+      this.generateTableData();
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   }
 
-
-  generateTableData(): void {
+  async generateTableData(): Promise<void> {
     if (!this.onboardDate || !this.relations.length || !this.forms.length || !this.timepoints.length) {
-      return; // Wait until all data is fetched
+      return;
     }
 
-    // Add headers dynamically: First column is "Form Name", followed by all timepoints
-    this.headers = ['Form Name', ...this.timepoints.map((tp) => tp.name)];
+    this.headers = ['Form Name', ...this.timepoints.map(tp => tp.name)];
 
-    // Generate table data
-    this.tableData = this.forms.map((form) => {
-      // Find related timepoints for this form based on relations
+    // Fetch versions for all forms in parallel
+    const formsWithVersions = await Promise.all(this.forms.map(async form => {
+      const versions = await this.getFormVersions(form._id);
+      return {
+        ...form,
+        versions: versions,
+        selectedVersion: versions[0] // Default to first version (latest)
+      };
+    }));
+
+    this.tableData = formsWithVersions.map(formWithVersions => {
       const relatedTimepointIds = this.relations
-        .filter((rel) => rel.formId === form._id) // Match relations by formId
-        .flatMap((rel) => rel.timepoints); // Extract timepoint IDs as an array
+        .filter(rel => rel.formId === formWithVersions._id)
+        .flatMap(rel => rel.timepoints);
 
-      console.log(`Form: ${form.title}, Related Timepoint IDs: `, relatedTimepointIds);
-
-      // Build the row: Start with form name
       const row: any = {
-        formName: form.title,
-        formLink: form.formLink,
-        formId: form._id
+        formName: formWithVersions.title,
+        formId: formWithVersions._id,
+        versions: formWithVersions.versions,
+        selectedVersion: formWithVersions.versions[0] // Default to first version (latest)
       };
 
-      // Add timepoint dates to the row
-      this.timepoints.forEach((timepoint) => {
+      this.timepoints.forEach(timepoint => {
         if (relatedTimepointIds.includes(timepoint._id)) {
-          // If the timepoint is related, calculate the date based on the interval
-          const interval = timepoint.interval || 0; // Default interval is 0 days
+          const interval = timepoint.interval || 0;
           const date = new Date(this.onboardDate!);
-          date.setDate(this.onboardDate!.getDate() + interval); // Calculate date based on interval
+          date.setDate(date.getDate() + interval);
 
-          // Format date to "dd-MMM-yyyy" (e.g., "15-Feb-2025")
           const formattedDate = date.toLocaleDateString('en-GB', {
             day: '2-digit',
             month: 'short',
-            year: 'numeric',
-          }).replace(/ /g, '-'); // Replace spaces with hyphens
+            year: 'numeric'
+          }).replace(/ /g, '-');
 
-          // Check if the form is already filled for this timepoint
           const isFilled = this.filledResponses.some(
-            (response) =>
-              response.formId === form._id && response.timepointId === timepoint._id
+            response => response.formId === formWithVersions._id && 
+                       response.timepointId === timepoint._id
           );
 
-          // Add formatted date and tick mark if filled
           row[timepoint.name] = isFilled ? `${formattedDate} ✔` : formattedDate;
         } else {
-          // If no relation, leave the cell empty or use '-'
           row[timepoint.name] = '-';
         }
       });
-      console.log("row : ", row);
 
       return row;
     });
-
-    console.log('Headers:', this.headers);
-    console.log('Table Data:', this.tableData);
   }
 
-  generateFormLink(formLink: string, formId: any, timepoint: any): string {
-    // Include the patientId, formId, and timepoint details in the URL
-    return `${formLink}?patientId=${this.patientId}&formId=${formId}&timepointId=${timepoint._id}&timepointName=${timepoint.name}`;
+  async getFormVersions(formId: string): Promise<any[]> {
+    try {
+      const response: any = await firstValueFrom(this.http.get(`${environment.api}/forms/${formId}/versions`));
+      return response?.result || [];
+    } catch (error) {
+      console.error('Error fetching versions:', error);
+      return [];
+    }
   }
 
-  back(){
+  updateVersionLink(row: any): void {
+    // This method will be called when the version selection changes
+    console.log('Version updated:', row.selectedVersion);
+    // No need to do anything else as the binding will update automatically
+  }
+
+  generateFormLink(row: any, timepoint: any): string {
+    // Using the selected version directly from the row
+    return `${row.selectedVersion.formLink}?patientId=${this.patientId}&formId=${row.selectedVersion._id}&timepointId=${timepoint._id}`;
+  }
+
+  back(): void {
     this.router.navigate([`/patient`]);
   }
-
 }

@@ -62,6 +62,9 @@ export class FormService {
     console.log('Sending data to server:', formLink);
     return this.http.put(`${environment.api}/savelinktoFormFields/${id}`,{formLink})
   }
+  getFormVersions(formId: string): Observable<any> {
+    return this.http.get(`${environment.api}/forms/${formId}/versions`);
+  }
 
   deleteFormFields(id: any) {
     return this.http.delete(`${environment.api}/deleteformfields/${id}`);

@@ -1,0 +1,25 @@
+.version-dropdown {
+    max-width: 150px;
+    margin: 0 auto;
+  }
+  
+  .version-dropdown select {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .table td {
+    vertical-align: middle;
+  }
+  
+  .text-primary {
+    color: #0d6efd !important;
+  }
+  
+  .text-decoration-none {
+    text-decoration: none;
+  }
+  
+  .table-responsive {
+    overflow-x: auto;
+  }

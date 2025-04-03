@@ -5,7 +5,6 @@
   <div class="text-center mb-4">
     <h1 class="display-4"><strong>Timepoint Matrix</strong></h1>
   </div>
-
   <div class="card shadow-sm p-4">
     <div class="table-responsive">
       <table class="table table-bordered table-striped text-center">
@@ -18,18 +17,28 @@
           <tr *ngFor="let row of tableData">
             <td>{{ row.formName }}</td>
             <td *ngFor="let timepoint of timepoints" class="text-center">
-              <ng-container *ngIf="row[timepoint.name] != '-' && row.formLink; else dashTemplate">
-                <!-- If a date and formLink exist, make it clickable -->
-                <a
-                  [href]="generateFormLink(row.formLink, row.formId, timepoint)"
-                  class="text-primary text-decoration-none"
-                >
+              <ng-container *ngIf="row[timepoint.name] != '-'">
+                <!-- Version dropdown (only shown if multiple versions exist) -->
+                <div class="version-selector mb-2" *ngIf="row.versions?.length > 1">
+                  <select class="form-select form-select-sm"
+                          [(ngModel)]="row.selectedVersion" 
+                          (change)="updateVersionLink(row)">
+                    <option *ngFor="let version of row.versions" 
+                            [ngValue]="version">
+                      v{{ version.version }}
+                    </option>
+                  </select>
+                </div>
+               
+                <!-- Form link -->
+                <a [href]="generateFormLink(row, timepoint)"
+                   class="text-primary text-decoration-none">
                   {{ row[timepoint.name] }}
                 </a>
               </ng-container>
-              <ng-template #dashTemplate>
+              <ng-container *ngIf="row[timepoint.name] == '-'">
                 -
-              </ng-template>
+              </ng-container>
             </td>
           </tr>
         </tbody>

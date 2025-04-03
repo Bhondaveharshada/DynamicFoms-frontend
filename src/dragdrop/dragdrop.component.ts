@@ -467,8 +467,9 @@ export class DragdropComponent {
     this.formService.addFormFields(formData, formId).subscribe({
       next: (res: any) => {
         Swal.close();
-        const id = res.result._id;
-        this._id = id;
+        // Access result from response
+        const id = res.result._id; // Now correctly nested
+        this._id = id
   
         // Save form link in /allForms but no display on dragdrop
         this.saveLink(id, formId);
